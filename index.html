@@ -294,7 +294,7 @@ select.inp{padding:.38rem .5rem}
   <div style="width:100%;max-width:360px">
     <div style="text-align:center;margin-bottom:2rem">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:3px;color:#4a9eff;line-height:1">LOCK CITY</div>
-      <div style="font-size:10px;color:#4f5f7a;letter-spacing:3px;text-transform:uppercase;margin-top:6px">LLC · AI BETTING SUITE</div>
+      <div style="font-size:10px;color:#4f5f7a;letter-spacing:3px;text-transform:uppercase;margin-top:6px">LLC · INNOVATION THAT EXCITES</div>
     </div>
     <div style="background:#161b26;border:1px solid rgba(96,165,250,0.2);border-radius:16px;padding:2rem">
       <div style="font-size:11px;color:#8b9ab5;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:1.5rem">Member Access</div>
@@ -324,14 +324,19 @@ select.inp{padding:.38rem .5rem}
 <script>
 // Inline login script — runs immediately, no dependency on rest of app
 (function(){
+  var DEFAULT_CREDS = { 'Jackson':'jackson1', 'Brock':'brock1' };
+
+  function getPass(user){
+    try{ return localStorage.getItem('lc_pw_'+user) || DEFAULT_CREDS[user]; }catch(e){ return DEFAULT_CREDS[user]; }
+  }
+
   function doLogin(){
     var user = document.getElementById('login-user').value;
     var pass = document.getElementById('login-pass').value;
     var err  = document.getElementById('login-err');
-    var creds = { 'Jackson':'jackson1', 'Brock':'brock1' };
-    if(creds[user] && creds[user] === pass){
+    if(getPass(user) === pass){
       err.textContent = '';
-      try{ localStorage.setItem('lc_user', user); }catch(e){}
+      try{ localStorage.setItem('lc_user', user); localStorage.setItem('lc_login_time', Date.now()); }catch(e){}
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       if(typeof CURRENT_USER !== 'undefined') CURRENT_USER = user;
@@ -344,7 +349,6 @@ select.inp{padding:.38rem .5rem}
 
   var btn  = document.getElementById('login-btn');
   var pass = document.getElementById('login-pass');
-
   btn.addEventListener('click', doLogin);
   btn.addEventListener('touchend', function(e){ e.preventDefault(); doLogin(); });
   pass.addEventListener('keyup', function(e){ if(e.keyCode===13) doLogin(); });
@@ -689,10 +693,30 @@ select.inp{padding:.38rem .5rem}
   </div>
 
   <div class="card0">
+    <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Change Password</div>
+    <div style="display:grid;gap:10px">
+      <div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:4px">Current Password</div>
+        <input id="pw-current" class="inp" type="password" placeholder="Enter current password" style="width:100%"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:4px">New Password</div>
+        <input id="pw-new" class="inp" type="password" placeholder="Enter new password" style="width:100%"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:4px">Confirm New Password</div>
+        <input id="pw-confirm" class="inp" type="password" placeholder="Confirm new password" style="width:100%"/>
+      </div>
+      <div id="pw-msg" style="font-size:12px;min-height:16px"></div>
+      <button class="btn solid" onclick="changePassword()" style="width:100%">Update Password</button>
+    </div>
+  </div>
+
+  <div class="card0">
     <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Data Management</div>
     <div class="btn-row">
       <button class="btn gold" onclick="exportHistory()">⬇ Export All Bets (CSV)</button>
-      <button class="btn danger" onclick="if(confirm('Clear all bet history?'))clearHistory()">🗑 Clear Bet History</button>
+      <button class="btn danger" onclick="clearHistory()">🗑 Clear Bet History</button>
       <button class="btn danger" onclick="if(confirm('Reset everything?')){localStorage.clear();location.reload()}">⚠ Reset App</button>
     </div>
   </div>
@@ -1460,6 +1484,7 @@ function bootApp(){
   document.getElementById('hdr-avatar').style.borderColor=acc.color+'55';
   document.getElementById('api-banner').style.display=acc.role==='admin'?'flex':'none';
   renderApiSettings();
+  resetInactivityTimer();
   init();
 }
 
@@ -1492,6 +1517,50 @@ function renderApiSettings(){
       <div style="font-size:11px;color:var(--t3);margin-top:.6rem">The API key is managed by Jackson. All AI features are shared between both accounts.</div>`;
   }
 }
+
+// ═══════════════════════════════════════════
+// CHANGE PASSWORD
+// ═══════════════════════════════════════════
+var DEFAULT_PASSWORDS = { 'Jackson':'jackson1', 'Brock':'brock1' };
+function getStoredPass(user){ try{ return localStorage.getItem('lc_pw_'+user)||DEFAULT_PASSWORDS[user]; }catch(e){ return DEFAULT_PASSWORDS[user]; } }
+
+function changePassword(){
+  var current = document.getElementById('pw-current').value;
+  var newPw   = document.getElementById('pw-new').value;
+  var confirm = document.getElementById('pw-confirm').value;
+  var msg     = document.getElementById('pw-msg');
+  if(!current||!newPw||!confirm){ msg.style.color='var(--red)'; msg.textContent='All fields are required.'; return; }
+  if(getStoredPass(CURRENT_USER) !== current){ msg.style.color='var(--red)'; msg.textContent='Current password is incorrect.'; return; }
+  if(newPw.length < 4){ msg.style.color='var(--red)'; msg.textContent='New password must be at least 4 characters.'; return; }
+  if(newPw !== confirm){ msg.style.color='var(--red)'; msg.textContent='New passwords do not match.'; return; }
+  try{ localStorage.setItem('lc_pw_'+CURRENT_USER, newPw); }catch(e){}
+  msg.style.color='var(--green)';
+  msg.textContent='Password updated successfully!';
+  document.getElementById('pw-current').value='';
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-confirm').value='';
+  setTimeout(function(){ msg.textContent=''; }, 3000);
+}
+
+// ═══════════════════════════════════════════
+// AUTO LOGOUT — 30 minutes of inactivity
+// ═══════════════════════════════════════════
+var AUTO_LOGOUT_MS = 30 * 60 * 1000;
+var _inactivityTimer = null;
+
+function resetInactivityTimer(){
+  clearTimeout(_inactivityTimer);
+  _inactivityTimer = setTimeout(function(){
+    if(CURRENT_USER){
+      logout();
+      document.getElementById('login-err').textContent = 'Logged out due to inactivity.';
+    }
+  }, AUTO_LOGOUT_MS);
+}
+
+['click','touchstart','keydown','scroll'].forEach(function(evt){
+  document.addEventListener(evt, resetInactivityTimer, true);
+});
 
 // ═══════════════════════════════════════════
 // RESPONSIVE SLIP LAYOUT
