@@ -559,11 +559,13 @@ select.inp{padding:.44rem .6rem}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
       <div style="font-size:12px;font-weight:500">Bet History</div>
       <div class="row" style="gap:6px">
+        <button class="btn solid" style="font-size:11px" onclick="checkResults()" id="check-results-btn">🔄 Check Results</button>
         <button class="btn" style="font-size:11px" onclick="showAddBetForm()">+ Log Bet</button>
-        <button class="btn gold" style="font-size:11px" onclick="exportHistory()">⬇ Export CSV</button>
-        <button class="btn danger" style="font-size:11px" onclick="clearHistory()">Clear All</button>
+        <button class="btn gold" style="font-size:11px" onclick="exportHistory()">⬇ CSV</button>
+        <button class="btn danger" style="font-size:11px" onclick="clearHistory()">Clear</button>
       </div>
     </div>
+    <div id="settlement-status" style="display:none;margin-bottom:.75rem;padding:.6rem .85rem;border-radius:var(--r);font-size:12px;font-weight:500"></div>
     <div id="add-bet-form" style="display:none;margin-bottom:1rem">
       <div class="card" style="padding:.85rem">
         <div style="display:grid;gap:8px">
@@ -885,26 +887,19 @@ async function generateParlay(){
     return;
   }
   const sportLabel = S_PARLAY_SPORT === 'Any Sport' ? 'any sport' : S_PARLAY_SPORT;
-  document.getElementById('parlay-container').innerHTML=`<div class="card-accent" style="text-align:center;padding:2.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.85rem;font-size:14px;font-weight:600;color:var(--t1)">Building ${sportLabel} parlay...</div><div style="font-size:12px;color:var(--t2);margin-top:.3rem">Scanning lines, injuries & trends</div></div>`;
+  document.getElementById('parlay-container').innerHTML=`<div class="card-accent" style="text-align:center;padding:2.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.85rem;font-size:14px;font-weight:600;color:var(--t1)">Fetching today's ${sportLabel} games...</div><div style="font-size:12px;color:var(--t2);margin-top:.3rem">Pulling live odds & schedule</div></div>`;
+
+  const games = await fetchTodaysGames(S_PARLAY_SPORT);
+  const gameContext = formatGamesForAI(games);
+
+  document.getElementById('parlay-container').innerHTML=`<div class="card-accent" style="text-align:center;padding:2.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.85rem;font-size:14px;font-weight:600;color:var(--t1)">Building ${games&&games.length?games.length+' games found — ':'' }AI parlay...</div><div style="font-size:12px;color:var(--t2);margin-top:.3rem">Analyzing lines & trends</div></div>`;
   const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   const kelly=kellyFor(S.profile);
   const numLegs=legsFor();
   const minConf=confFor();
-  const sportInstruction = S_PARLAY_SPORT === 'Any Sport' ? 'Use the best available games across any sport today.' : `All legs must be ${S_PARLAY_SPORT} games only.`;
+  const sportInstruction = S_PARLAY_SPORT === 'Any Sport' ? 'Use the best available games from the slate below.' : `All legs must be ${S_PARLAY_SPORT} games only.`;
   const sys=`You are a sharp sports betting AI. Today is ${today}. Risk profile: ${S.profile}. ${sportInstruction}`;
-  const prompt=`Generate a HIGH PROBABILITY ${numLegs}-leg parlay for today. ${sportInstruction}
-Return ONLY valid JSON, no markdown, no backticks:
-{
-  "parlayName":"catchy name",
-  "totalOddsAmerican":"+350",
-  "totalOddsDecimal":4.5,
-  "impliedProbability":0.22,
-  "kellyFraction":${(kelly.min+kelly.max)/2},
-  "legs":[{"num":1,"pick":"Team + bet","detail":"1-sentence sharp reasoning","sport":"${S_PARLAY_SPORT==='Any Sport'?'NBA':S_PARLAY_SPORT}","odds":"-110","confidence":0.70}],
-  "wagerNote":"2-3 sentences on sizing and why.",
-  "correlationWarning":null
-}
-Rules: ${numLegs} legs, each confidence >=${minConf}, total odds +250 to +700, mix spreads/totals/MLs, no correlated legs.`;
+  const prompt=`HERE ARE TODAY'S REAL GAMES WITH LIVE ODDS:\n${gameContext}\n\nBuild a HIGH PROBABILITY ${numLegs}-leg parlay using ONLY games from the list above. Use the actual teams, real lines, and real odds shown. Do not invent games or teams not listed.\nReturn ONLY valid JSON, no markdown:\n{"parlayName":"catchy name","totalOddsAmerican":"+350","totalOddsDecimal":4.5,"impliedProbability":0.22,"kellyFraction":${(kelly.min+kelly.max)/2},"legs":[{"num":1,"pick":"Team + bet type + line","detail":"1-sentence sharp reasoning using real matchup context","sport":"${S_PARLAY_SPORT==='Any Sport'?'NBA':S_PARLAY_SPORT}","odds":"-110","confidence":0.70}],"wagerNote":"2-3 sentences on sizing.","correlationWarning":null}\nRules: ${numLegs} legs, each confidence >=${minConf}, total odds +250 to +700, mix bet types, no correlated legs.`;
   try{
     const text=await aiCall(sys,prompt,1200);
     const clean=text.replace(/```json|```/g,'').trim();
@@ -1013,10 +1008,22 @@ function saveParlayAsBet(wager){
 // CHAT SYSTEM
 // ═══════════════════════════════════════════
 const SYSTEMS={
-  adv:(sport,date)=>`You are a sharp sports betting advisor. Today is ${date}. ${sport!=='All'?'Focus on '+sport+'.':''} Give concise actionable advice with trends, injury context, line value, confidence. Under 180 words. Expert tone. End with a clear recommendation.`,
-  build:(date)=>`You are a pro sports betting analyst. Today is ${date}. Evaluate bets covering: line value, key factors, verdict (SHARP PLAY/ACCEPTABLE/AVOID), Kelly stake %. Under 220 words. Direct and analytical.`,
-  lines:(date)=>`You are a sports betting line movement expert. Today is ${date}. Explain line movements, sharp vs public money, steam moves, reverse line movement. Be technical and concise.`,
-  props:(sport,date)=>`You are a player props specialist. Today is ${date}. Focus on ${sport||'all sports'}. Cover matchup context, recent form, injury status, over/under value, confidence %. Under 200 words.`
+  adv:async(sport,date)=>{
+    const games = await fetchTodaysGames(sport!=='All'?sport:'All');
+    const gameCtx = formatGamesForAI(games);
+    return `You are a sharp sports betting advisor. Today is ${date}. ${sport!=='All'?'Focus on '+sport+'.':''}\n\nTODAY'S REAL GAMES AND ODDS:\n${gameCtx}\n\nGive concise actionable advice based ONLY on games listed above. Reference real teams, actual lines and odds shown. Mention injury context, line value, confidence. Under 200 words. End with a clear recommendation.`;
+  },
+  build:(date)=>`You are a pro sports betting analyst. Today is ${date}. Evaluate bets: line value, key factors, verdict (SHARP PLAY/ACCEPTABLE/AVOID), Kelly stake %. Under 220 words.`,
+  lines:async(date)=>{
+    const games = await fetchTodaysGames('All');
+    const gameCtx = formatGamesForAI(games);
+    return `You are a sports betting line movement expert. Today is ${date}.\n\nTODAY'S REAL GAMES:\n${gameCtx}\n\nAnswer questions about line movement using real games above. Be technical and concise.`;
+  },
+  props:async(sport,date)=>{
+    const games = await fetchTodaysGames(sport||'All');
+    const gameCtx = formatGamesForAI(games);
+    return `You are a player props specialist. Today is ${date}. Focus on ${sport||'all sports'}.\n\nTODAY'S REAL GAMES:\n${gameCtx}\n\nOnly discuss props for players in teams listed above. Cover matchup, recent form, value. Under 200 words.`;
+  }
 };
 
 async function doChat(channel){
@@ -1030,10 +1037,12 @@ async function doChat(channel){
   document.getElementById(channel+'-btn').disabled=true;
   const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   let sys='';
-  if(channel==='adv') sys=SYSTEMS.adv(S.sport,today);
-  else if(channel==='build') sys=SYSTEMS.build(today);
-  else if(channel==='lines') sys=SYSTEMS.lines(today);
-  else if(channel==='props') sys=SYSTEMS.props(document.getElementById('prop-sport')?.value||'',today);
+  try{
+    if(channel==='adv') sys=await SYSTEMS.adv(S.sport,today);
+    else if(channel==='build') sys=SYSTEMS.build(today);
+    else if(channel==='lines') sys=await SYSTEMS.lines(today);
+    else if(channel==='props') sys=await SYSTEMS.props(document.getElementById('prop-sport')?.value||'',today);
+  }catch(e){ sys=`You are a sharp sports betting advisor. Today is ${today}.`; }
   try{
     const reply=await aiCall(sys,msg);
     document.getElementById(lid).remove();
@@ -1331,17 +1340,120 @@ function updateCharts(){
 }
 
 // ═══════════════════════════════════════════
+// LIVE GAME FETCHER — The Odds API
+// ═══════════════════════════════════════════
+const ODDS_SPORTS = {
+  'Any Sport':  ['basketball_nba','baseball_mlb','icehockey_nhl','americanfootball_nfl','soccer_epl','soccer_uefa_europa_league'],
+  'NBA':        ['basketball_nba'],
+  'MLB':        ['baseball_mlb'],
+  'NHL':        ['icehockey_nhl'],
+  'NFL':        ['americanfootball_nfl'],
+  'NCAAB':      ['basketball_ncaab'],
+  'Soccer':     ['soccer_epl','soccer_mls','soccer_uefa_europa_league'],
+  'UFC/MMA':    ['mma_mixed_martial_arts'],
+  'Tennis':     ['tennis_atp_french_open','tennis_wta_french_open'],
+  'Golf':       ['golf_masters_tournament_winner'],
+  'All':        ['basketball_nba','baseball_mlb','icehockey_nhl','americanfootball_nfl','soccer_epl']
+};
+
+let _gameCache = {};
+let _gameCacheTime = 0;
+const CACHE_TTL = 15 * 60 * 1000; // 15 min cache
+
+async function fetchTodaysGames(sportFilter='Any Sport'){
+  const oddsKey = getOddsKey();
+  const cacheKey = sportFilter;
+  const now = Date.now();
+
+  // Return cached if fresh
+  if(_gameCache[cacheKey] && (now - _gameCacheTime) < CACHE_TTL){
+    return _gameCache[cacheKey];
+  }
+
+  if(!oddsKey) return null;
+
+  const sportKeys = ODDS_SPORTS[sportFilter] || ODDS_SPORTS['Any Sport'];
+  const allGames = [];
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+
+  for(const sportKey of sportKeys){
+    try{
+      const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${oddsKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&dateFormat=iso`;
+      const res = await fetch(url);
+      if(!res.ok) continue;
+      const games = await res.json();
+      if(!Array.isArray(games)) continue;
+
+      // Filter to today's games only
+      const todayGames = games.filter(g => {
+        const gameDate = g.commence_time ? g.commence_time.split('T')[0] : '';
+        return gameDate === todayStr;
+      });
+
+      todayGames.forEach(g => {
+        const h2h = g.bookmakers?.[0]?.markets?.find(m=>m.key==='h2h');
+        const spread = g.bookmakers?.[0]?.markets?.find(m=>m.key==='spreads');
+        const total = g.bookmakers?.[0]?.markets?.find(m=>m.key==='totals');
+
+        const homeOdds = h2h?.outcomes?.find(o=>o.name===g.home_team)?.price;
+        const awayOdds = h2h?.outcomes?.find(o=>o.name===g.away_team)?.price;
+        const homeSpread = spread?.outcomes?.find(o=>o.name===g.home_team);
+        const awaySpread = spread?.outcomes?.find(o=>o.name===g.away_team);
+        const overLine = total?.outcomes?.find(o=>o.name==='Over');
+
+        allGames.push({
+          sport: sportKey.includes('basketball_nba') ? 'NBA'
+               : sportKey.includes('baseball') ? 'MLB'
+               : sportKey.includes('icehockey') ? 'NHL'
+               : sportKey.includes('americanfootball_nfl') ? 'NFL'
+               : sportKey.includes('ncaab') ? 'NCAAB'
+               : sportKey.includes('soccer') ? 'Soccer'
+               : sportKey.includes('mma') ? 'UFC/MMA'
+               : sportKey.replace(/_/g,' '),
+          home: g.home_team,
+          away: g.away_team,
+          time: g.commence_time ? new Date(g.commence_time).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : 'TBD',
+          homeML: homeOdds ? (homeOdds>0?'+':'')+homeOdds : null,
+          awayML: awayOdds ? (awayOdds>0?'+':'')+awayOdds : null,
+          homeSpread: homeSpread ? (homeSpread.point>0?'+':'')+homeSpread.point : null,
+          homeSpreadOdds: homeSpread ? (homeSpread.price>0?'+':'')+homeSpread.price : null,
+          awaySpread: awaySpread ? (awaySpread.point>0?'+':'')+awaySpread.point : null,
+          total: overLine ? overLine.point : null,
+          overOdds: overLine ? (overLine.price>0?'+':'')+overLine.price : null
+        });
+      });
+    }catch(e){ continue; }
+  }
+
+  _gameCache[cacheKey] = allGames;
+  _gameCacheTime = now;
+  return allGames;
+}
+
+function formatGamesForAI(games){
+  if(!games || !games.length) return 'No live game data available — use your knowledge of today\'s schedule.';
+  return games.slice(0,20).map(g =>
+    `${g.sport}: ${g.away} @ ${g.home} (${g.time})` +
+    (g.homeSpread ? ` | Spread: ${g.home} ${g.homeSpread} (${g.homeSpreadOdds})` : '') +
+    (g.total ? ` | Total: O/U ${g.total} (${g.overOdds})` : '') +
+    (g.homeML ? ` | ML: ${g.home} ${g.homeML} / ${g.away} ${g.awayML}` : '')
+  ).join('\n');
+}
+
+// ═══════════════════════════════════════════
 // LINES & FADES
 // ═══════════════════════════════════════════
 async function refreshLines(){
   const c=document.getElementById('lines-container');
-  c.innerHTML='<div style="padding:1rem;text-align:center"><div class="dot-pulse"><span></span><span></span><span></span></div></div>';
+  c.innerHTML='<div style="padding:1rem;text-align:center"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="font-size:11px;color:var(--t2);margin-top:.5rem">Pulling live odds...</div></div>';
   const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const games = await fetchTodaysGames('All');
+  const gameContext = formatGamesForAI(games);
   try{
-    const res=await aiCall(`You are a sports betting line movement analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
-      `Generate 5 realistic line movement examples for today's games. JSON format:
-{"movements":[{"game":"Team A vs Team B","sport":"NBA","openLine":"-3","currentLine":"-6","direction":"sharp","note":"Brief reason"}]}
-direction is "sharp" (sharp money moving it) or "square" (public money).`,700);
+    const res=await aiCall(
+      `You are a sharp sports betting line movement analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `Here are TODAY'S REAL GAMES with current odds:\n${gameContext}\n\nUsing ONLY games from the list above, identify 5 notable line movements or sharp money situations. If real games are listed, use actual team names and real lines from that data.\nJSON format: {"movements":[{"game":"Team A vs Team B","sport":"NBA","openLine":"-3","currentLine":"-6","direction":"sharp","note":"Brief reason why sharp money is here"}]}\ndirection is "sharp" or "square".`,700);
     const data=JSON.parse(res.replace(/```json|```/g,'').trim());
     c.innerHTML=data.movements.map(m=>`
       <div class="line-item">
@@ -1353,18 +1465,20 @@ direction is "sharp" (sharp money moving it) or "square" (public money).`,700);
         <span class="${m.direction==='sharp'?'sharp-badge':'sq-badge'}">${m.direction==='sharp'?'SHARP':'SQUARE'}</span>
       </div>`).join('');
   }catch(e){
-    c.innerHTML=`<div style="font-size:12px;color:var(--red);padding:.5rem">Error loading lines. Check your API key.</div>`;
+    c.innerHTML=`<div style="font-size:12px;color:var(--red);padding:.5rem">Error: ${e.message}</div>`;
   }
 }
 
 async function refreshFades(){
   const c=document.getElementById('fades-container');
-  c.innerHTML='<div style="padding:1rem;text-align:center"><div class="dot-pulse"><span></span><span></span><span></span></div></div>';
+  c.innerHTML='<div style="padding:1rem;text-align:center"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="font-size:11px;color:var(--t2);margin-top:.5rem">Finding fade spots...</div></div>';
   const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const games = await fetchTodaysGames('All');
+  const gameContext = formatGamesForAI(games);
   try{
-    const res=await aiCall(`You are a contrarian sports betting analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
-      `Generate 4 "fade the public" opportunities for today. JSON format:
-{"fades":[{"game":"Team A vs Team B","sport":"NBA","publicPct":78,"fade":"Fade Team A","note":"Brief contrarian reason"}]}`,600);
+    const res=await aiCall(
+      `You are a contrarian sports betting analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `Here are TODAY'S REAL GAMES:\n${gameContext}\n\nUsing ONLY games from the list above, find 4 strong "fade the public" opportunities where the public is likely overloading one side. Use actual team names from the list.\nJSON format: {"fades":[{"game":"Team A vs Team B","sport":"NBA","publicPct":78,"fade":"Fade Team A","note":"Brief contrarian reasoning"}]}`,600);
     const data=JSON.parse(res.replace(/```json|```/g,'').trim());
     c.innerHTML=data.fades.map(f=>`
       <div class="fade-item">
@@ -1376,7 +1490,7 @@ async function refreshFades(){
         <span class="fade-rec">${f.fade}</span>
       </div>`).join('');
   }catch(e){
-    c.innerHTML=`<div style="font-size:12px;color:var(--red);padding:.5rem">Error loading fades. Check your API key.</div>`;
+    c.innerHTML=`<div style="font-size:12px;color:var(--red);padding:.5rem">Error: ${e.message}</div>`;
   }
 }
 
@@ -1388,13 +1502,14 @@ async function huntProps(){
   const type=document.getElementById('prop-type').value;
   const filter=document.getElementById('prop-filter').value.trim();
   const c=document.getElementById('props-container');
-  c.innerHTML=`<div class="card" style="text-align:center;padding:2rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Hunting ${sport} ${type} props...</div></div>`;
+  c.innerHTML=`<div class="card" style="text-align:center;padding:2rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Fetching today's ${sport} games...</div></div>`;
   const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const games = await fetchTodaysGames(sport);
+  const gameContext = formatGamesForAI(games);
   try{
     const res=await aiCall(
       `You are a player props specialist. Today is ${today}. Return ONLY JSON, no markdown.`,
-      `Generate 5 ${sport} ${type} player prop recommendations${filter?' for '+filter:''}. JSON:
-{"props":[{"player":"Name","team":"Team","opponent":"Opponent","line":"24.5","direction":"over","odds":"-115","confidence":0.70,"reasoning":"Brief reason","sport":"${sport}","statType":"${type}"}]}`,900);
+      `Here are TODAY'S REAL ${sport.toUpperCase()} GAMES:\n${gameContext}\n\nGenerate 5 ${sport} ${type} player prop recommendations${filter?' focusing on '+filter:''}. ONLY use players from teams in TODAY'S GAME LIST above. Do not invent games.\nJSON: {"props":[{"player":"Name","team":"Team","opponent":"Opponent","line":"24.5","direction":"over","odds":"-115","confidence":0.70,"reasoning":"Brief reason based on matchup","sport":"${sport}","statType":"${type}"}]}`,900);
     const data=JSON.parse(res.replace(/```json|```/g,'').trim());
     c.innerHTML=`<div class="card0">
       ${data.props.map(p=>{
@@ -1505,34 +1620,210 @@ function bootApp(){
   init();
 }
 
+function saveOddsKey(){
+  const el=document.getElementById('settings-odds-key');
+  if(!el) return;
+  const k=el.value.trim();
+  if(!k){ alert('Please enter a valid Odds API key.'); return; }
+  try{ localStorage.setItem('odds_api_key',k); }catch(e){}
+  renderApiSettings();
+  alert('Odds API key saved! Auto-settlement is now enabled.');
+}
+
+function getOddsKey(){ try{ return localStorage.getItem('odds_api_key')||''; }catch(e){ return ''; } }
+
 function renderApiSettings(){
   const block=document.getElementById('api-settings-block');
   const acc=ACCOUNTS[CURRENT_USER];
   const keySet=!!ls('ant_key');
+  const oddsKey=getOddsKey();
   if(acc.role==='admin'){
     block.innerHTML=`
       <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">API Configuration</div>
-      <div style="display:grid;gap:10px">
+      <div style="display:grid;gap:12px">
         <div>
-          <div style="font-size:12px;color:var(--t2);margin-bottom:4px">Anthropic API Key (required)</div>
+          <div style="font-size:12px;color:var(--t2);margin-bottom:4px">Anthropic API Key (AI features)</div>
           <div class="row">
             <input id="settings-ant-key" class="inp inp-mono" type="password" placeholder="sk-ant-..." style="flex:1" value="${ls('ant_key')}"/>
-            <button class="btn solid" onclick="saveFromSettings()">Save Key</button>
+            <button class="btn solid" onclick="saveFromSettings()">Save</button>
           </div>
-          <div style="font-size:11px;color:var(--t3);margin-top:4px">Powers all AI features for both accounts. Get yours at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a></div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--t2);margin-bottom:4px">The Odds API Key <span style="color:var(--green);font-size:10px">${oddsKey?'● Connected':'○ Not set'}</span></div>
+          <div class="row">
+            <input id="settings-odds-key" class="inp inp-mono" type="password" placeholder="e.g. 1e39668314a42..." style="flex:1" value="${oddsKey}"/>
+            <button class="btn solid" onclick="saveOddsKey()">Save</button>
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">Enables auto bet settlement. Free at <a href="https://the-odds-api.com" target="_blank" style="color:var(--accent)">the-odds-api.com</a></div>
         </div>
       </div>`;
   } else {
-    const statusColor = keySet ? 'var(--green)' : 'var(--red)';
-    const statusText  = keySet ? '✓ API key active — all features enabled' : '✗ No API key — ask Jackson to add one';
+    const statusColor=keySet?'var(--green)':'var(--red)';
+    const statusText=keySet?'✓ AI key active':'✗ No AI key — ask Jackson';
+    const oddsColor=oddsKey?'var(--green)':'var(--red)';
+    const oddsText=oddsKey?'✓ Odds API connected — auto-settlement on':'✗ No Odds API key — ask Jackson';
     block.innerHTML=`
       <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">API Status</div>
-      <div style="display:flex;align-items:center;gap:10px;padding:.75rem;background:var(--bg2);border-radius:var(--r);border:.5px solid var(--bd)">
-        <div style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0"></div>
-        <div style="font-size:13px;color:${statusColor};font-weight:500">${statusText}</div>
+      <div style="display:grid;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;padding:.75rem;background:var(--bg2);border-radius:var(--r);border:1px solid var(--bd)">
+          <div style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0"></div>
+          <div style="font-size:13px;color:${statusColor};font-weight:500">${statusText}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:.75rem;background:var(--bg2);border-radius:var(--r);border:1px solid var(--bd)">
+          <div style="width:8px;height:8px;border-radius:50%;background:${oddsColor};flex-shrink:0"></div>
+          <div style="font-size:13px;color:${oddsColor};font-weight:500">${oddsText}</div>
+        </div>
       </div>
-      <div style="font-size:11px;color:var(--t3);margin-top:.6rem">The API key is managed by Jackson. All AI features are shared between both accounts.</div>`;
+      <div style="font-size:11px;color:var(--t3);margin-top:.6rem">Keys managed by Jackson. Shared between both accounts.</div>`;
   }
+}
+
+// ═══════════════════════════════════════════
+// AUTO SETTLEMENT — The Odds API
+// ═══════════════════════════════════════════
+
+// Map our sport names to Odds API sport keys
+const SPORT_KEYS = {
+  'NBA':'basketball_nba','NFL':'americanfootball_nfl','MLB':'baseball_mlb',
+  'NHL':'icehockey_nhl','Soccer':'soccer_epl','NCAAB':'basketball_ncaab',
+  'UFC/MMA':'mma_mixed_martial_arts','Tennis':'tennis_atp_french_open',
+  'Parlay':'basketball_nba' // fallback for parlays
+};
+
+function showSettlementStatus(msg, type){
+  const el = document.getElementById('settlement-status');
+  if(!el) return;
+  el.style.display = 'block';
+  el.style.background = type==='success' ? 'var(--green-a)' : type==='error' ? 'var(--red-a)' : 'var(--accent-dim)';
+  el.style.color = type==='success' ? 'var(--green)' : type==='error' ? 'var(--red)' : 'var(--accent)';
+  el.style.border = '1px solid ' + (type==='success' ? 'rgba(52,211,153,.3)' : type==='error' ? 'rgba(248,113,113,.3)' : 'rgba(74,158,255,.3)');
+  el.textContent = msg;
+}
+
+async function checkResults(){
+  const oddsKey = getOddsKey();
+  if(!oddsKey){
+    showSettlementStatus('⚠ No Odds API key set — go to Settings to add it.','error');
+    return;
+  }
+  const pending = S.bets.filter(b=>b.result==='pending');
+  if(!pending.length){
+    showSettlementStatus('✓ No pending bets to check.','success');
+    return;
+  }
+
+  const btn = document.getElementById('check-results-btn');
+  if(btn){ btn.disabled=true; btn.textContent='Checking...'; }
+  showSettlementStatus('🔄 Checking results for '+pending.length+' pending bet(s)...','info');
+
+  // Group pending bets by sport
+  const sports = [...new Set(pending.map(b=>b.sport))];
+  let settledCount = 0;
+  let scores = {};
+
+  // Fetch scores for each unique sport
+  for(const sport of sports){
+    const sportKey = SPORT_KEYS[sport] || SPORT_KEYS['NBA'];
+    try{
+      const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/scores/?apiKey=${oddsKey}&daysFrom=3`;
+      const res = await fetch(url);
+      if(!res.ok) continue;
+      const games = await res.json();
+      if(Array.isArray(games)) scores[sport] = games;
+    }catch(e){ continue; }
+  }
+
+  // Try to settle each pending bet
+  for(const bet of pending){
+    const sportGames = scores[bet.sport] || [];
+    const result = trySettleBet(bet, sportGames);
+    if(result){
+      updateResult(bet.id, result);
+      settledCount++;
+    }
+  }
+
+  if(btn){ btn.disabled=false; btn.textContent='🔄 Check Results'; }
+
+  if(settledCount > 0){
+    showSettlementStatus(`✅ Settled ${settledCount} bet(s) automatically!`,'success');
+  } else {
+    showSettlementStatus(`ℹ No completed games found yet for your pending bets. Check back after games finish.`,'info');
+  }
+}
+
+function trySettleBet(bet, games){
+  if(!games.length) return null;
+
+  // Look for completed games that match this bet
+  const completedGames = games.filter(g => g.completed === true);
+  if(!completedGames.length) return null;
+
+  const pickLower = bet.pick.toLowerCase();
+
+  for(const game of completedGames){
+    if(!game.scores || game.scores.length < 2) continue;
+
+    const home = game.home_team || '';
+    const away = game.away_team || '';
+    const homeLower = home.toLowerCase();
+    const awayLower = away.toLowerCase();
+
+    // Check if this game matches the bet by looking for team names in the pick
+    const homeMatch = pickLower.includes(homeLower.split(' ').pop()) || homeLower.includes(pickLower.split(' ')[0]);
+    const awayMatch = pickLower.includes(awayLower.split(' ').pop()) || awayLower.includes(pickLower.split(' ')[0]);
+
+    if(!homeMatch && !awayMatch) continue;
+
+    // Get scores
+    const homeScore = parseFloat(game.scores.find(s=>s.name===home)?.score||0);
+    const awayScore = parseFloat(game.scores.find(s=>s.name===away)?.score||0);
+
+    // Try to determine result based on bet type
+    const oddsNum = parseInt((bet.odds||'0').replace('+',''));
+    const isMoneyline = !pickLower.includes('over') && !pickLower.includes('under') && !pickLower.includes('+') && !pickLower.includes('-');
+    const isOver = pickLower.includes('over');
+    const isUnder = pickLower.includes('under');
+
+    const totalScore = homeScore + awayScore;
+
+    // Extract line from pick (e.g. "Lakers -4.5" or "over 220.5")
+    const lineMatch = pickLower.match(/[-+]?\d+\.?\d*/g);
+    const line = lineMatch ? parseFloat(lineMatch[lineMatch.length-1]) : null;
+
+    if(isOver && line !== null){
+      if(totalScore > line) return 'win';
+      if(totalScore < line) return 'loss';
+      return 'push';
+    }
+
+    if(isUnder && line !== null){
+      if(totalScore < line) return 'win';
+      if(totalScore > line) return 'loss';
+      return 'push';
+    }
+
+    // Spread or moneyline — figure out which team the bet is on
+    const bettingHome = homeMatch && !awayMatch;
+    const bettingAway = awayMatch && !homeMatch;
+
+    if(bettingHome){
+      const spread = line && pickLower.includes('-') && !isOver && !isUnder ? -Math.abs(line) : (line && pickLower.includes('+') ? Math.abs(line) : 0);
+      const adjustedHome = homeScore + spread;
+      if(adjustedHome > awayScore) return 'win';
+      if(adjustedHome < awayScore) return 'loss';
+      return 'push';
+    }
+
+    if(bettingAway){
+      const spread = line && pickLower.includes('-') && !isOver && !isUnder ? -Math.abs(line) : (line && pickLower.includes('+') ? Math.abs(line) : 0);
+      const adjustedAway = awayScore + spread;
+      if(adjustedAway > homeScore) return 'win';
+      if(adjustedAway < homeScore) return 'loss';
+      return 'push';
+    }
+  }
+  return null;
 }
 
 // ═══════════════════════════════════════════
@@ -1593,6 +1884,8 @@ window.addEventListener('resize',checkSlipLayout);
 // BOOT
 // ═══════════════════════════════════════════
 window.addEventListener('load', function(){
+  // Pre-seed Odds API key
+  try{ if(!localStorage.getItem('odds_api_key')) localStorage.setItem('odds_api_key','1e39668314a42d77541c61ca8200fcac'); }catch(e){}
   checkSlipLayout();
   // Restore session
   var saved = '';
