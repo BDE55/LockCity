@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>Lock City LLC — AI Betting Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+button,input,select,a{touch-action:manipulation;}
+:root{
+  --accent:#4a9eff;--accent-dim:rgba(74,158,255,0.14);--gold:#4a9eff;--gold-dim:rgba(74,158,255,0.14);
+  --green:#34d399;--green-a:rgba(52,211,153,0.12);
+  --red:#f87171;--red-a:rgba(248,113,113,0.12);
+  --blue:#60a5fa;--blue-a:rgba(96,165,250,0.14);
+  --blue-bright:#3b82f6;
+  --purple:#a78bfa;--purple-a:rgba(167,139,250,0.12);
+  --bg0:#0f1117;--bg1:#161b26;--bg2:#1c2333;--bg3:#243044;
+  --t1:#e8edf5;--t2:#8b9ab5;--t3:#4f5f7a;--t4:#2e3d57;
+  --bd:rgba(96,165,250,0.10);--bd2:rgba(96,165,250,0.18);--bd3:rgba(96,165,250,0.28);
+  --accent:#1e3a5f;
+  --r:8px;--rl:12px;--rxl:16px;
+  --shadow:0 4px 24px rgba(0,0,0,0.5);
+}
+html,body{min-height:100%;background:var(--bg0);font-family:'DM Sans',sans-serif;color:var(--t1);-webkit-font-smoothing:antialiased}
+#app{width:100%;max-width:960px;margin:0 auto;background:var(--bg1);min-height:100vh;display:flex;flex-direction:column;box-shadow:0 0 80px rgba(0,0,0,0.6)}
+
+/* ── MOBILE SAFE AREA ── */
+@supports(padding:env(safe-area-inset-bottom)){
+  .disclaimer{padding-bottom:calc(.75rem + env(safe-area-inset-bottom))}
+  .tabs{padding-bottom:0}
+}
+
+/* ── HEADER ── */
+.hdr{padding:.85rem 1.25rem;border-bottom:.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:var(--bg1);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px)}
+.logo{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.logo-main{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--accent);line-height:1}
+.logo-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--accent);color:#fff;letter-spacing:.5px;font-family:'DM Mono',monospace;vertical-align:middle}
+.logo-sub{font-size:10px;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;font-weight:500}
+.hdr-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hdr-stat{text-align:center}
+.hdr-stat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--t1)}
+.hdr-stat-val.green{color:var(--green)}
+.hdr-stat-val.red{color:var(--red)}
+.hdr-stat-val.gold{color:var(--gold)}
+.hdr-stat-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+
+/* ── API BANNER ── */
+#api-banner{background:rgba(74,158,255,0.06);border-bottom:.5px solid rgba(74,158,255,0.18);padding:.6rem 1.25rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#api-banner label{font-size:12px;color:var(--t2);white-space:nowrap}
+.api-input{flex:1;min-width:160px;padding:.35rem .6rem;font-size:13px;font-family:'DM Mono',monospace;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t1);outline:none}
+.api-input:focus{border-color:var(--gold)}
+.api-save{padding:.35rem .85rem;font-size:12px;font-weight:600;border:none;border-radius:var(--r);background:var(--accent);color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.key-hint{font-size:11px;color:var(--t3);width:100%;margin-top:-4px}
+.key-hint a{color:var(--gold);text-decoration:none}
+
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:.5px solid var(--bd);background:var(--bg1);overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:.65rem .85rem;font-size:12px;font-weight:500;color:var(--t3);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;white-space:nowrap;transition:color .15s,border-color .15s;font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent}
+.tab:hover{color:var(--t1)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── MAIN ── */
+.main{padding:1rem 1.1rem;flex:1}
+.panel{display:none}.panel.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--rl);padding:1rem 1.1rem;margin-bottom:.85rem}
+.card0{background:var(--bg1);border:.5px solid var(--bd);border-radius:var(--rl);padding:1rem 1.1rem;margin-bottom:.85rem}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;margin-bottom:.85rem;color:var(--t1)}
+
+/* ── GRID ── */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:.85rem}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:.85rem}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
+.metric{background:var(--bg3);border:.5px solid var(--bd);border-radius:var(--r);padding:.7rem .9rem}
+.metric-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.metric-val{font-family:'DM Mono',monospace;font-size:19px;font-weight:500;color:var(--t1)}
+.metric-val.green{color:var(--green)}.metric-val.red{color:var(--red)}.metric-val.gold{color:var(--gold)}.metric-val.blue{color:var(--blue)}
+.metric-sub{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* ── PARLAY LEGS ── */
+.leg{display:flex;align-items:flex-start;gap:10px;padding:.65rem 0;border-bottom:.5px solid var(--bd)}
+.leg:last-child{border-bottom:none;padding-bottom:0}
+.leg-num{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;color:var(--gold);min-width:18px;padding-top:2px}
+.leg-body{flex:1;min-width:0}
+.leg-pick{font-size:13px;font-weight:500;margin-bottom:2px;color:var(--t1)}
+.leg-detail{font-size:11px;color:var(--t2);line-height:1.4}
+.leg-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.leg-odds{font-family:'DM Mono',monospace;font-size:11px;padding:2px 7px;border-radius:12px;background:var(--bg3);color:var(--t2);border:.5px solid var(--bd2)}
+.conf-row{display:flex;align-items:center;gap:4px}
+.conf-bar{width:36px;height:3px;border-radius:2px;background:var(--bg3);overflow:hidden}
+.conf-fill{height:100%;border-radius:2px}
+.conf-fill.hi{background:var(--green)}.conf-fill.md{background:var(--gold)}.conf-fill.lo{background:var(--red)}
+.conf-txt{font-size:10px;font-family:'DM Mono',monospace;color:var(--t3)}
+
+/* ── ODDS PILL ── */
+.odds-pill{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;padding:3px 10px;border-radius:20px;border:.5px solid var(--bd2);background:var(--bg3);color:var(--t1)}
+.odds-pill.pos{color:var(--green);border-color:rgba(52,211,153,.3);background:var(--green-a)}
+
+/* ── RISK METER ── */
+.risk-track{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;position:relative}
+.risk-fill{position:absolute;inset:0;background:linear-gradient(90deg,var(--green) 0%,var(--gold) 50%,var(--red) 100%)}
+.risk-pointer{position:relative;height:12px}
+.risk-arrow{position:absolute;top:2px;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:6px solid var(--gold);transform:translateX(-50%);transition:left .5s ease}
+
+/* ── WAGER ── */
+.wager-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:7px;margin:.7rem 0}
+.wbox{background:var(--bg2);border:.5px solid var(--bd);border-radius:var(--r);padding:.6rem .8rem;text-align:center}
+.wbox-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.wbox-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--t1)}
+
+/* ── PROFILE SELECTOR ── */
+.profile-row{display:flex;gap:6px;margin-bottom:.85rem;flex-wrap:wrap}
+.profile-btn{padding:6px 12px;font-size:11px;font-weight:500;border:.5px solid var(--bd2);border-radius:20px;cursor:pointer;background:var(--bg2);color:var(--t2);font-family:'DM Sans',sans-serif;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.profile-btn:hover{border-color:var(--gold);color:var(--gold)}
+.profile-btn.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold);font-weight:600}
+
+/* ── SPORT PILLS ── */
+.sport-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.85rem}
+.sp{padding:4px 11px;font-size:11px;font-weight:500;border:.5px solid var(--bd2);border-radius:20px;cursor:pointer;background:var(--bg2);color:var(--t2);font-family:'DM Sans',sans-serif;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.sp:hover{border-color:var(--gold);color:var(--gold)}
+.sp.active{border-color:var(--gold);background:var(--gold-dim);color:var(--gold);font-weight:600}
+
+/* ── CHAT ── */
+.chat-wrap{border:.5px solid var(--bd);border-radius:var(--rl);overflow:hidden}
+.chat-msgs{min-height:220px;max-height:320px;overflow-y:auto;padding:.85rem;display:flex;flex-direction:column;gap:9px;background:var(--bg2);scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.msg{max-width:88%;padding:.6rem .8rem;border-radius:var(--r);font-size:13px;line-height:1.55;word-wrap:break-word}
+.msg.ai{background:var(--bg3);border:.5px solid var(--bd);align-self:flex-start;color:var(--t1)}
+.msg.user{background:var(--accent);color:#fff;align-self:flex-end;font-weight:500}
+.msg.loading{background:var(--bg3);border:.5px solid var(--bd);align-self:flex-start}
+.quick-btns{display:flex;flex-wrap:wrap;gap:5px;padding:.55rem .7rem;background:var(--bg1);border-top:.5px solid var(--bd)}
+.qb{font-size:11px;padding:3px 9px;border:.5px solid var(--bd2);border-radius:20px;cursor:pointer;background:var(--bg2);color:var(--t2);font-family:'DM Sans',sans-serif;transition:all .12s;-webkit-tap-highlight-color:transparent}
+.qb:hover{border-color:var(--gold);color:var(--gold)}
+.chat-row{display:flex;gap:7px;padding:.55rem .7rem;background:var(--bg1);border-top:.5px solid var(--bd)}
+.chat-in{flex:1;padding:.45rem .65rem;font-size:14px;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t1);font-family:'DM Sans',sans-serif;outline:none;min-width:0}
+.chat-in:focus{border-color:var(--blue)}
+.send-btn{padding:.45rem .85rem;background:var(--accent);color:#fff;font-size:12px;font-weight:600;border:none;border-radius:var(--r);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
+.send-btn:active{opacity:.75}.send-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ── BET SLIP ── */
+.slip-item{display:flex;align-items:flex-start;gap:8px;padding:.6rem 0;border-bottom:.5px solid var(--bd)}
+.slip-item:last-child{border-bottom:none}
+.slip-sport{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--blue-a);color:var(--blue);font-weight:600;font-family:'DM Mono',monospace;white-space:nowrap}
+.slip-body{flex:1;min-width:0}
+.slip-pick{font-size:13px;font-weight:500;color:var(--t1)}
+.slip-detail{font-size:11px;color:var(--t2)}
+.slip-odds{font-family:'DM Mono',monospace;font-size:12px;color:var(--t2);white-space:nowrap}
+.slip-remove{font-size:14px;cursor:pointer;padding:0 2px;background:none;border:none;color:var(--t3);line-height:1;transition:color .12s}
+.slip-remove:hover{color:var(--red)}
+.slip-empty{text-align:center;padding:2rem;font-size:13px;color:var(--t3)}
+
+/* ── HISTORY TABLE ── */
+.hist-table{width:100%;border-collapse:collapse;font-size:12px}
+.hist-table th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);padding:.4rem .5rem;border-bottom:.5px solid var(--bd);font-weight:500}
+.hist-table td{padding:.5rem .5rem;border-bottom:.5px solid var(--bd);color:var(--t1)}
+.hist-table tr:last-child td{border-bottom:none}
+.hist-table tr:hover td{background:var(--bg2)}
+.status-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace}
+.status-badge.win{background:var(--green-a);color:var(--green)}
+.status-badge.loss{background:var(--red-a);color:var(--red)}
+.status-badge.pending{background:var(--gold-dim);color:var(--gold)}
+
+/* ── CALENDAR HEATMAP ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:.5rem}
+.cal-day{aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'DM Mono',monospace;cursor:default;transition:transform .1s}
+.cal-day:hover{transform:scale(1.15)}
+.cal-day.win{background:rgba(52,211,153,.6);color:#fff}
+.cal-day.loss{background:rgba(248,113,113,.5);color:#fff}
+.cal-day.break{background:var(--gold-dim);color:var(--gold)}
+.cal-day.empty{background:var(--bg3);color:var(--t4)}
+
+/* ── FADE DETECTOR ── */
+.fade-item{display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:.5px solid var(--bd)}
+.fade-item:last-child{border-bottom:none}
+.fade-pct{font-family:'DM Mono',monospace;font-size:19px;font-weight:500;min-width:44px;color:var(--red)}
+.fade-info{flex:1;min-width:0}
+.fade-game{font-size:13px;font-weight:500;color:var(--t1)}
+.fade-note{font-size:11px;color:var(--t2)}
+.fade-rec{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--green-a);color:var(--green);font-weight:600;font-family:'DM Mono',monospace;white-space:nowrap}
+
+/* ── LINE MOVEMENT ── */
+.line-item{display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:.5px solid var(--bd)}
+.line-item:last-child{border-bottom:none}
+.line-move{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;min-width:40px}
+.line-move.sharp{color:var(--green)}.line-move.sq{color:var(--red)}
+.line-info{flex:1;min-width:0}
+.line-game{font-size:13px;font-weight:500;color:var(--t1)}
+.line-detail{font-size:11px;color:var(--t2)}
+.sharp-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--green-a);color:var(--green);font-weight:600;font-family:'DM Mono',monospace}
+.sq-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--red-a);color:var(--red);font-weight:600;font-family:'DM Mono',monospace}
+
+/* ── BUTTONS ── */
+.btn{padding:.42rem .9rem;font-size:12px;font-weight:500;border:.5px solid var(--bd2);border-radius:var(--r);cursor:pointer;background:var(--bg2);color:var(--t1);font-family:'DM Sans',sans-serif;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.btn:hover{border-color:var(--gold);color:var(--gold)}
+.btn.gold{border-color:var(--gold);color:var(--gold)}
+.btn.gold:hover{background:var(--gold-dim)}
+.btn.solid{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.btn.solid:hover{opacity:.85}
+.btn.danger{border-color:rgba(248,113,113,.4);color:var(--red)}
+.btn.danger:hover{background:var(--red-a)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:.7rem}
+
+/* ── INPUTS ── */
+.inp{padding:.42rem .6rem;font-size:13px;border:.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t1);font-family:'DM Sans',sans-serif;outline:none}
+.inp:focus{border-color:var(--blue)}
+.inp-mono{font-family:'DM Mono',monospace}
+select.inp{padding:.38rem .5rem}
+
+/* ── MISC ── */
+.divider{height:.5px;background:var(--bd);margin:.85rem 0}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace;vertical-align:middle;margin-left:5px}
+.tag.gold{background:var(--accent);color:#fff}
+.tag.green{background:var(--green-a);color:var(--green)}
+.tag.blue{background:var(--blue-a);color:var(--blue)}
+.tag.red{background:var(--red-a);color:var(--red)}
+.tag.purple{background:var(--purple-a);color:var(--purple)}
+.dot-pulse{display:inline-flex;gap:4px;align-items:center}
+.dot-pulse span{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:dp 1.2s ease-in-out infinite}
+.dot-pulse span:nth-child(2){animation-delay:.2s}.dot-pulse span:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{opacity:.3;transform:scale(.75)}40%{opacity:1;transform:scale(1)}}
+.notice{font-size:12px;color:var(--t2);line-height:1.6;padding:.65rem;background:var(--bg3);border-radius:var(--r);border:.5px solid var(--bd)}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.disclaimer{font-size:11px;color:var(--t3);text-align:center;padding:.85rem 1.25rem;border-top:.5px solid var(--bd);line-height:1.6}
+.chart-wrap{position:relative;height:170px;margin-top:.65rem}
+.empty-state{text-align:center;padding:1.75rem 1rem;color:var(--t3);font-size:13px}
+.empty-state .big{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--t4);letter-spacing:1px;margin-bottom:.5rem}
+
+/* ══════════════════════════════════════
+   MOBILE RESPONSIVE — iPhone optimized
+══════════════════════════════════════ */
+@media(max-width:640px){
+  .main{padding:.85rem .85rem}
+  .hdr{padding:.7rem .85rem;gap:6px}
+  .logo-main{font-size:18px}
+  .logo-sub{display:none}
+  /* Hide less important header stats on small screens */
+  .hdr-stat:nth-child(3),.hdr-stat:nth-child(4){display:none}
+  .hdr-stat-val{font-size:12px}
+  /* Full-width stacked controls on parlay tab */
+  #tab-parlay .row{flex-direction:column;align-items:stretch;gap:8px}
+  #tab-parlay .row .inp{width:100%}
+  #tab-parlay .row .profile-row{justify-content:center}
+  #tab-parlay .row .btn.solid{width:100%;padding:.65rem;font-size:14px}
+  /* Bet slip: stack columns */
+  #slip-layout{grid-template-columns:1fr !important}
+  /* Lines & Fades: stack */
+  #tab-lines > div:first-child{grid-template-columns:1fr !important}
+  /* Tracker charts: stack */
+  #tab-tracker > div:nth-child(2){grid-template-columns:1fr !important}
+  /* Prop hunter: stack filters */
+  #tab-props .row{flex-direction:column;align-items:stretch}
+  #tab-props .row .inp,#tab-props .row .btn{width:100%}
+  /* Settings: full width inputs */
+  #tab-settings .row{flex-direction:column;align-items:stretch}
+  #tab-settings .row span{min-width:unset !important}
+  #tab-settings .row .inp,#tab-settings .row input{width:100% !important}
+  /* Wager grid: 2 cols on mobile */
+  .wager-grid{grid-template-columns:1fr 1fr}
+  /* Metrics: 2 cols */
+  .grid3{grid-template-columns:1fr 1fr}
+  /* History table scroll */
+  #history-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* Chat input bigger on mobile */
+  .chat-in{font-size:16px}
+  /* Cards: less padding */
+  .card,.card0{padding:.85rem .85rem}
+  /* Bet slip add form: stack */
+  #tab-slip .row{flex-direction:column;align-items:stretch}
+  #tab-slip .row .inp,#tab-slip .row input,#tab-slip .row select{width:100% !important}
+  /* API banner */
+  #api-banner{padding:.5rem .85rem}
+  .key-hint{display:none}
+  /* Bankroll row on parlay */
+  .bankroll-row{flex-direction:column;align-items:stretch}
+  /* Buttons full width in btn-row on mobile */
+  .btn-row .btn.solid{flex:1}
+  /* Chart height smaller */
+  .chart-wrap{height:140px}
+  /* Login screen */
+  #login-screen > div{padding:.5rem}
+}
+@media(max-width:400px){
+  .logo-badge{display:none}
+  .tab{padding:.6rem .65rem;font-size:11px}
+}
+</style>
+</head>
+<body>
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f1117;padding:1.5rem">
+  <div style="width:100%;max-width:360px">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:3px;color:#4a9eff;line-height:1">LOCK CITY</div>
+      <div style="font-size:10px;color:#4f5f7a;letter-spacing:3px;text-transform:uppercase;margin-top:6px">LLC · AI BETTING SUITE</div>
+    </div>
+    <div style="background:#161b26;border:1px solid rgba(96,165,250,0.2);border-radius:16px;padding:2rem">
+      <div style="font-size:11px;color:#8b9ab5;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:1.5rem">Member Access</div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:#4f5f7a;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Username</div>
+        <select id="login-user" style="width:100%;font-size:16px;padding:12px;border:1px solid rgba(96,165,250,0.25);border-radius:8px;background:#1c2333;color:#e8edf5;font-family:sans-serif;outline:none">
+          <option value="Jackson">Jackson</option>
+          <option value="Brock">Brock</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:#4f5f7a;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Password</div>
+        <input id="login-pass" type="password" placeholder="Enter password" style="width:100%;font-size:16px;padding:12px;border:1px solid rgba(96,165,250,0.25);border-radius:8px;background:#1c2333;color:#e8edf5;font-family:sans-serif;outline:none;-webkit-appearance:none"/>
+      </div>
+
+      <div id="login-err" style="font-size:13px;color:#f87171;text-align:center;margin-bottom:10px;min-height:18px"></div>
+
+      <input type="button" id="login-btn" value="SIGN IN" style="width:100%;padding:14px;background:#4a9eff;color:#fff;font-size:15px;font-weight:700;border:none;border-radius:8px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none;appearance:none"/>
+
+    </div>
+    <div style="text-align:center;margin-top:1rem;font-size:10px;color:#2e3d57;letter-spacing:.5px">LOCK CITY LLC · ENTERTAINMENT ONLY · 21+</div>
+  </div>
+</div>
+
+<script>
+// Inline login script — runs immediately, no dependency on rest of app
+(function(){
+  function doLogin(){
+    var user = document.getElementById('login-user').value;
+    var pass = document.getElementById('login-pass').value;
+    var err  = document.getElementById('login-err');
+    var creds = { 'Jackson':'jackson1', 'Brock':'brock1' };
+    if(creds[user] && creds[user] === pass){
+      err.textContent = '';
+      try{ localStorage.setItem('lc_user', user); }catch(e){}
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      if(typeof CURRENT_USER !== 'undefined') CURRENT_USER = user;
+      if(typeof bootApp === 'function') bootApp();
+    } else {
+      err.textContent = 'Incorrect password. Try again.';
+      document.getElementById('login-pass').value = '';
+    }
+  }
+
+  var btn  = document.getElementById('login-btn');
+  var pass = document.getElementById('login-pass');
+
+  btn.addEventListener('click', doLogin);
+  btn.addEventListener('touchend', function(e){ e.preventDefault(); doLogin(); });
+  pass.addEventListener('keyup', function(e){ if(e.keyCode===13) doLogin(); });
+})();
+</script>
+
+<div id="app" style="display:none">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-main">LOCK CITY</div>
+    <span class="logo-badge">LLC</span>
+    <div class="logo-sub" style="margin-left:4px">AI Betting Suite</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-stat"><div class="hdr-stat-val gold" id="hdr-bankroll">$500</div><div class="hdr-stat-lbl">Bankroll</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-val" id="hdr-record">0-0</div><div class="hdr-stat-lbl">Record</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-val" id="hdr-roi">0.0%</div><div class="hdr-stat-lbl">ROI</div></div>
+    <div class="hdr-stat"><div class="hdr-stat-val" id="hdr-streak">—</div><div class="hdr-stat-lbl">Streak</div></div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--t3);text-align:right"><div id="live-date">—</div><div style="color:var(--green)">● Live</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="hdr-avatar" style="width:32px;height:32px;border-radius:50%;border:.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;flex-shrink:0">—</div>
+      <div>
+        <div id="hdr-user-name" style="font-size:12px;font-weight:500;line-height:1.2">—</div>
+        <button onclick="logout()" style="font-size:10px;color:var(--t3);background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;transition:color .12s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--t3)'">Sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- API BANNER -->
+<div id="api-banner">
+  <label>Anthropic Key:</label>
+  <input id="ant-key" class="api-input" type="password" placeholder="sk-ant-..." autocomplete="off"/>
+  <button class="api-save" onclick="saveKeys()">Save</button>
+  <div class="key-hint">Keys stored locally in your browser only. Get yours at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.</div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('parlay',this)">🎯 Today's Parlay</button>
+  <button class="tab" onclick="showTab('advisor',this)">🤖 AI Advisor</button>
+  <button class="tab" onclick="showTab('slip',this)">📋 Bet Slip <span id="slip-count-badge"></span></button>
+  <button class="tab" onclick="showTab('tracker',this)">📊 Tracker</button>
+  <button class="tab" onclick="showTab('lines',this)">📈 Lines & Fades</button>
+  <button class="tab" onclick="showTab('props',this)">🎲 Prop Hunter</button>
+  <button class="tab" onclick="showTab('settings',this)">⚙️ Settings</button>
+</div>
+
+<div class="main">
+
+<!-- ══════════════════ TODAY'S PARLAY ══════════════════ -->
+<div class="panel active" id="tab-parlay">
+  <div class="row" style="margin-bottom:1rem">
+    <span style="font-size:13px;color:var(--t2)">Bankroll: $</span>
+    <input id="bankroll" class="inp inp-mono" type="number" value="500" min="10" style="width:100px" oninput="onBankrollChange()"/>
+    <div class="profile-row" style="margin:0">
+      <button class="profile-btn active" onclick="setProfile(this,'conservative')">🛡 Conservative</button>
+      <button class="profile-btn" onclick="setProfile(this,'balanced')">⚖️ Balanced</button>
+      <button class="profile-btn" onclick="setProfile(this,'degen')">🔥 Degen</button>
+    </div>
+    <button class="btn solid" onclick="generateParlay()">↻ Generate parlay</button>
+  </div>
+  <div id="parlay-container">
+    <div class="card" style="text-align:center;padding:2.5rem"><div style="font-size:13px;color:var(--t2)">Enter your API key and click Generate to get today's AI parlay.</div></div>
+  </div>
+</div>
+
+<!-- ══════════════════ AI ADVISOR ══════════════════ -->
+<div class="panel" id="tab-advisor">
+  <div class="sport-pills" id="sport-pills">
+    <button class="sp active" onclick="selSport(this,'All')">All Sports</button>
+    <button class="sp" onclick="selSport(this,'NBA')">NBA</button>
+    <button class="sp" onclick="selSport(this,'MLB')">MLB</button>
+    <button class="sp" onclick="selSport(this,'NHL')">NHL</button>
+    <button class="sp" onclick="selSport(this,'NFL')">NFL</button>
+    <button class="sp" onclick="selSport(this,'NCAAB')">NCAAB</button>
+    <button class="sp" onclick="selSport(this,'Soccer')">Soccer</button>
+    <button class="sp" onclick="selSport(this,'UFC/MMA')">UFC/MMA</button>
+    <button class="sp" onclick="selSport(this,'Golf')">Golf</button>
+    <button class="sp" onclick="selSport(this,'Tennis')">Tennis</button>
+    <button class="sp" onclick="selSport(this,'NASCAR')">NASCAR</button>
+    <button class="sp" onclick="selSport(this,'WNBA')">WNBA</button>
+  </div>
+  <div class="chat-wrap">
+    <div class="chat-msgs" id="adv-msgs">
+      <div class="msg ai">Hey — I'm your AI betting advisor. Ask me about any matchup, player prop, spread, or parlay. I analyze lines, trends, and give you sharp takes.<br><br><em>Try: "Who should I take in tonight's Lakers game?" or "Build me a 3-leg NBA parlay."</em></div>
+    </div>
+    <div class="quick-btns">
+      <button class="qb" onclick="qAsk('adv','Best value bets today across all sports')">Best value today</button>
+      <button class="qb" onclick="qAsk('adv','What is the sharpest line movement today and why?')">Sharp movement</button>
+      <button class="qb" onclick="qAsk('adv','Give me high confidence player props for today')">Player props</button>
+      <button class="qb" onclick="qAsk('adv','Best fade the public plays today — contrarian picks')">Fade the public</button>
+      <button class="qb" onclick="qAsk('adv','Explain how to read line movement and what sharp money looks like')">How to read lines</button>
+      <button class="qb" onclick="qAsk('adv','What weather conditions affect totals tonight?')">Weather impacts</button>
+    </div>
+    <div class="chat-row">
+      <input class="chat-in" id="adv-in" type="text" placeholder="Ask about any bet, matchup, or strategy..." onkeydown="if(event.key==='Enter')doChat('adv')"/>
+      <button class="send-btn" id="adv-btn" onclick="doChat('adv')">Ask AI</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ BET SLIP ══════════════════ -->
+<div class="panel" id="tab-slip">
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:1rem;align-items:start" id="slip-layout">
+
+    <!-- Left: add bet form -->
+    <div>
+      <div class="sec-title">Add to Slip</div>
+      <div class="card0">
+        <div style="display:grid;gap:8px">
+          <div class="row">
+            <select id="slip-sport" class="inp" style="width:100px">
+              <option>NBA</option><option>MLB</option><option>NFL</option><option>NHL</option>
+              <option>NCAAB</option><option>Soccer</option><option>UFC</option><option>Golf</option><option>Tennis</option><option>Other</option>
+            </select>
+            <input id="slip-pick" class="inp" type="text" placeholder="Pick (e.g. Lakers -4.5)" style="flex:1"/>
+          </div>
+          <div class="row">
+            <input id="slip-game" class="inp" type="text" placeholder="Matchup (e.g. Lakers vs Warriors)" style="flex:1"/>
+            <input id="slip-odds" class="inp inp-mono" type="text" placeholder="Odds (-110)" style="width:90px"/>
+          </div>
+          <div class="row">
+            <input id="slip-note" class="inp" type="text" placeholder="Your reasoning (optional)" style="flex:1"/>
+            <button class="btn solid" onclick="addToSlip()">+ Add Leg</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-title" style="margin-top:.5rem">Bet Analyzer</div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="build-msgs" style="min-height:180px;max-height:250px">
+          <div class="msg ai">Describe any bet or paste your slip — I'll tell you if it's sharp, square, or a trap, and give Kelly-sized wager guidance.<br><br><em>"Lakers -4.5 vs Warriors. LeBron questionable. Buy or fade?"</em></div>
+        </div>
+        <div class="quick-btns">
+          <button class="qb" onclick="qAsk('build','Evaluate my current bet slip and tell me if I should parlay or keep separate')">Evaluate my slip</button>
+          <button class="qb" onclick="qAsk('build','What is Kelly Criterion and how should I size my bets?')">Kelly sizing</button>
+          <button class="qb" onclick="qAsk('build','How do I spot value in a line vs juice traps?')">Value vs juice</button>
+        </div>
+        <div class="chat-row">
+          <input class="chat-in" id="build-in" type="text" placeholder="Describe your bet for analysis..." onkeydown="if(event.key==='Enter')doChat('build')"/>
+          <button class="send-btn" id="build-btn" onclick="doChat('build')">Analyze</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: slip -->
+    <div>
+      <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Current Slip</span>
+        <button class="btn danger" style="font-size:11px" onclick="clearSlip()">Clear</button>
+      </div>
+      <div class="card0">
+        <div id="slip-legs"><div class="slip-empty">No legs added yet.</div></div>
+        <div class="divider"></div>
+        <div id="slip-summary"></div>
+        <div class="btn-row">
+          <button class="btn solid" style="flex:1" onclick="saveSlipToBets()">💾 Save as Bet</button>
+          <button class="btn gold" onclick="exportSlip()">⬇ Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TRACKER ══════════════════ -->
+<div class="panel" id="tab-tracker">
+  <div class="grid3">
+    <div class="metric"><div class="metric-lbl">Total P&L</div><div class="metric-val" id="tr-pnl">$0.00</div></div>
+    <div class="metric"><div class="metric-lbl">Win Rate</div><div class="metric-val" id="tr-wr">—</div></div>
+    <div class="metric"><div class="metric-lbl">ROI</div><div class="metric-val" id="tr-roi">—</div></div>
+    <div class="metric"><div class="metric-lbl">Total Wagered</div><div class="metric-val" id="tr-wagered">$0</div></div>
+    <div class="metric"><div class="metric-lbl">Best Sport</div><div class="metric-val" id="tr-best-sport" style="font-size:14px">—</div></div>
+    <div class="metric"><div class="metric-lbl">Current Streak</div><div class="metric-val" id="tr-streak">—</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+    <div class="card0">
+      <div style="font-size:12px;font-weight:500;margin-bottom:.5rem">P&L Over Time</div>
+      <div class="chart-wrap"><canvas id="pnl-chart"></canvas></div>
+    </div>
+    <div class="card0">
+      <div style="font-size:12px;font-weight:500;margin-bottom:.5rem">Win Rate by Sport</div>
+      <div class="chart-wrap"><canvas id="sport-chart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card0">
+    <div style="font-size:12px;font-weight:500;margin-bottom:.75rem">Calendar Heatmap — Last 35 Days</div>
+    <div style="display:flex;gap:4px;margin-bottom:6px">
+      <span style="font-size:10px;color:var(--t3)">Sun</span><span style="font-size:10px;color:var(--t3);margin-left:auto">Sat</span>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="display:flex;gap:12px;margin-top:.6rem;font-size:10px;color:var(--t3)">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(34,197,94,.7);margin-right:3px"></span>Win</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:rgba(239,68,68,.6);margin-right:3px"></span>Loss</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--gold-dim);margin-right:3px"></span>Push</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--bg2);margin-right:3px"></span>No bet</span>
+    </div>
+  </div>
+
+  <div class="card0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:8px">
+      <div style="font-size:12px;font-weight:500">Bet History</div>
+      <div class="row" style="gap:6px">
+        <button class="btn" style="font-size:11px" onclick="showAddBetForm()">+ Log Bet</button>
+        <button class="btn gold" style="font-size:11px" onclick="exportHistory()">⬇ Export CSV</button>
+        <button class="btn danger" style="font-size:11px" onclick="clearHistory()">Clear All</button>
+      </div>
+    </div>
+    <div id="add-bet-form" style="display:none;margin-bottom:1rem">
+      <div class="card" style="padding:.85rem">
+        <div style="display:grid;gap:8px">
+          <div class="row">
+            <select id="hb-sport" class="inp" style="width:90px"><option>NBA</option><option>MLB</option><option>NFL</option><option>NHL</option><option>Other</option></select>
+            <input id="hb-pick" class="inp" type="text" placeholder="Pick/parlay description" style="flex:1"/>
+          </div>
+          <div class="row">
+            <input id="hb-odds" class="inp inp-mono" type="text" placeholder="Odds" style="width:80px"/>
+            <input id="hb-wager" class="inp inp-mono" type="number" placeholder="Wager $" style="width:90px"/>
+            <select id="hb-result" class="inp" style="width:90px"><option value="pending">Pending</option><option value="win">Win</option><option value="loss">Loss</option><option value="push">Push</option></select>
+            <button class="btn solid" onclick="logBet()">Save</button>
+            <button class="btn" onclick="hideAddBetForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="history-table-wrap">
+      <div class="empty-state"><div class="big">No Bets Yet</div>Log your first bet to start tracking.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ LINES & FADES ══════════════════ -->
+<div class="panel" id="tab-lines">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+    <div class="card0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <div style="font-size:13px;font-weight:500">Sharp Line Movement <span class="tag green">LIVE AI</span></div>
+        <button class="btn" style="font-size:11px" onclick="refreshLines()">↻ Refresh</button>
+      </div>
+      <div id="lines-container"><div class="empty-state" style="padding:1rem"><div class="dot-pulse"><span></span><span></span><span></span></div></div></div>
+    </div>
+
+    <div class="card0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <div style="font-size:13px;font-weight:500">Fade the Public <span class="tag red">CONTRARIAN</span></div>
+        <button class="btn" style="font-size:11px" onclick="refreshFades()">↻ Refresh</button>
+      </div>
+      <div id="fades-container"><div class="empty-state" style="padding:1rem"><div class="dot-pulse"><span></span><span></span><span></span></div></div></div>
+    </div>
+  </div>
+
+  <div class="card0" style="margin-top:1rem">
+    <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Ask About Lines <span class="tag blue">AI</span></div>
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="lines-msgs" style="min-height:160px;max-height:220px">
+        <div class="msg ai">Ask me about any specific line, why it moved, or whether sharp or public money is driving a spread.</div>
+      </div>
+      <div class="chat-row">
+        <input class="chat-in" id="lines-in" type="text" placeholder="e.g. Why did the Chiefs line move from -6 to -8.5?" onkeydown="if(event.key==='Enter')doChat('lines')"/>
+        <button class="send-btn" id="lines-btn" onclick="doChat('lines')">Ask</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PROP HUNTER ══════════════════ -->
+<div class="panel" id="tab-props">
+  <div class="row" style="margin-bottom:1rem">
+    <select id="prop-sport" class="inp">
+      <option>NBA</option><option>MLB</option><option>NFL</option><option>NHL</option><option>Soccer</option>
+    </select>
+    <select id="prop-type" class="inp">
+      <option>Points</option><option>Assists</option><option>Rebounds</option><option>Strikeouts</option>
+      <option>Home Runs</option><option>Passing Yards</option><option>Rushing Yards</option><option>Shots on Goal</option><option>Goals</option>
+    </select>
+    <input id="prop-filter" class="inp" type="text" placeholder="Player or team filter..." style="flex:1"/>
+    <button class="btn solid" onclick="huntProps()">🔍 Hunt Props</button>
+  </div>
+  <div id="props-container">
+    <div class="card" style="text-align:center;padding:2rem;color:var(--t3);font-size:13px">Select a sport and stat type, then click Hunt Props for AI-powered prop recommendations.</div>
+  </div>
+
+  <div style="margin-top:1rem">
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="props-msgs" style="min-height:160px;max-height:220px">
+        <div class="msg ai">I specialize in player props. Ask me about any player's recent form, matchup, or whether an over/under is worth taking tonight.</div>
+      </div>
+      <div class="quick-btns">
+        <button class="qb" onclick="qAsk('props','Best NBA player prop overs for tonight based on matchup and recent form')">Best NBA overs</button>
+        <button class="qb" onclick="qAsk('props','Which pitchers have the best strikeout prop value tonight in MLB?')">MLB K props</button>
+        <button class="qb" onclick="qAsk('props','Best same game parlay prop combinations for tonight')">SGP combos</button>
+      </div>
+      <div class="chat-row">
+        <input class="chat-in" id="props-in" type="text" placeholder="Ask about any player prop..." onkeydown="if(event.key==='Enter')doChat('props')"/>
+        <button class="send-btn" id="props-btn" onclick="doChat('props')">Ask</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ SETTINGS ══════════════════ -->
+<div class="panel" id="tab-settings">
+  <div class="sec-title">Settings & API Keys</div>
+  <div class="card0" id="api-settings-block">
+    <!-- Rendered dynamically by renderApiSettings() -->
+  </div>
+
+  <div class="card0">
+    <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Betting Preferences</div>
+    <div style="display:grid;gap:10px">
+      <div class="row">
+        <span style="font-size:13px;color:var(--t2);min-width:140px">Default bankroll:</span>
+        <input id="pref-bankroll" class="inp inp-mono" type="number" value="500" style="width:110px" oninput="savePref('bankroll',this.value)"/>
+      </div>
+      <div class="row">
+        <span style="font-size:13px;color:var(--t2);min-width:140px">Risk profile:</span>
+        <select id="pref-profile" class="inp" onchange="savePref('profile',this.value)">
+          <option value="conservative">Conservative (1–1.5% Kelly)</option>
+          <option value="balanced" selected>Balanced (2–3% Kelly)</option>
+          <option value="degen">Degen (3–5% Kelly)</option>
+        </select>
+      </div>
+      <div class="row">
+        <span style="font-size:13px;color:var(--t2);min-width:140px">Min confidence:</span>
+        <input id="pref-minconf" class="inp inp-mono" type="number" value="62" min="50" max="85" style="width:70px" oninput="savePref('minConf',this.value)"/> <span style="font-size:12px;color:var(--t3)">%</span>
+      </div>
+      <div class="row">
+        <span style="font-size:13px;color:var(--t2);min-width:140px">Parlay legs:</span>
+        <select id="pref-legs" class="inp" style="width:110px" onchange="savePref('legs',this.value)">
+          <option value="2">2 legs</option>
+          <option value="3" selected>3 legs</option>
+          <option value="4">4 legs</option>
+          <option value="5">5 legs</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card0">
+    <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Data Management</div>
+    <div class="btn-row">
+      <button class="btn gold" onclick="exportHistory()">⬇ Export All Bets (CSV)</button>
+      <button class="btn danger" onclick="if(confirm('Clear all bet history?'))clearHistory()">🗑 Clear Bet History</button>
+      <button class="btn danger" onclick="if(confirm('Reset everything?')){localStorage.clear();location.reload()}">⚠ Reset App</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<div class="disclaimer">Lock City LLC is for entertainment and informational purposes only. Past performance does not guarantee future results. Gamble responsibly. 21+ only.</div>
+</div><!-- end #app -->
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+const API = 'https://api.anthropic.com/v1/messages';
+const MODEL = 'claude-sonnet-4-20250514';
+let S = {
+  profile:'balanced',
+  sport:'All',
+  slip:[],
+  bets:[],
+  parlay:null,
+  pnlChart:null,
+  sportChart:null,
+  prefs:{bankroll:500,profile:'balanced',minConf:62,legs:3}
+};
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init(){
+  document.getElementById('live-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const k = ls('ant_key');
+  if(k){ document.getElementById('ant-key').value=k; document.getElementById('settings-ant-key').value=k; bannerOk(); }
+  const prefs = lsJ('prefs');
+  if(prefs) S.prefs = {...S.prefs,...prefs};
+  const bets = lsJ('bets');
+  if(bets) S.bets = bets;
+  const slip = lsJ('slip');
+  if(slip) S.slip = slip;
+  applyPrefs();
+  updateHdrStats();
+  renderSlip();
+  renderHistory();
+  renderCalendar();
+  initCharts();
+  // Auto-load lines & fades
+  setTimeout(()=>{ refreshLines(); refreshFades(); }, 800);
+}
+
+function applyPrefs(){
+  document.getElementById('bankroll').value = S.prefs.bankroll;
+  document.getElementById('pref-bankroll').value = S.prefs.bankroll;
+  document.getElementById('pref-minconf').value = S.prefs.minConf;
+  document.getElementById('pref-legs').value = S.prefs.legs;
+  document.getElementById('pref-profile').value = S.prefs.profile;
+}
+
+// ═══════════════════════════════════════════
+// KEYS
+// ═══════════════════════════════════════════
+function saveKeys(){
+  const k = document.getElementById('ant-key').value.trim();
+  if(!k.startsWith('sk-ant-')){ alert('Invalid Anthropic key'); return; }
+  lsSet('ant_key',k);
+  document.getElementById('settings-ant-key').value=k;
+  bannerOk();
+  generateParlay();
+}
+function saveFromSettings(){
+  const el=document.getElementById('settings-ant-key');
+  if(!el) return;
+  const k=el.value.trim();
+  if(!k.startsWith('sk-ant-')){ alert('Invalid key — must start with sk-ant-'); return; }
+  localStorage.setItem('ant_key',k);
+  document.getElementById('ant-key').value=k;
+  bannerOk();
+  renderApiSettings();
+  alert('API key saved!');
+}
+function bannerOk(){
+  const b=document.getElementById('api-banner');
+  b.style.background='rgba(34,197,94,0.07)';
+  b.style.borderBottomColor='rgba(34,197,94,0.3)';
+  document.querySelector('.api-save').textContent='✓ Saved';
+  document.querySelector('.api-save').style.background='var(--green)';
+}
+function getKey(){ return ls('ant_key')||document.getElementById('ant-key').value.trim(); }
+
+// ═══════════════════════════════════════════
+// PREFS
+// ═══════════════════════════════════════════
+function savePref(k,v){
+  S.prefs[k]=k==='bankroll'||k==='minConf'||k==='legs'?+v:v;
+  lsSet('prefs',JSON.stringify(S.prefs));
+  if(k==='bankroll') document.getElementById('bankroll').value=v;
+}
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+function showTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+// SPORT / PROFILE
+// ═══════════════════════════════════════════
+function selSport(el,s){
+  document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); S.sport=s;
+}
+function setProfile(el,p){
+  document.querySelectorAll('.profile-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); S.profile=p;
+  S.prefs.profile=p; lsSet('prefs',JSON.stringify(S.prefs));
+}
+function kellyFor(p){
+  if(p==='conservative') return {min:.01,max:.015};
+  if(p==='degen') return {min:.03,max:.05};
+  return {min:.018,max:.028};
+}
+function legsFor(){ return S.prefs.legs||3; }
+function confFor(){ return (S.prefs.minConf||62)/100; }
+
+// ═══════════════════════════════════════════
+// AI CALL
+// ═══════════════════════════════════════════
+async function aiCall(system,userMsg,max=1000){
+  const key=getKey();
+  if(!key||!key.startsWith('sk-ant-')) throw new Error('No API key set.');
+  const res=await fetch(API,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:MODEL,max_tokens:max,system,messages:[{role:'user',content:userMsg}]})
+  });
+  const data=await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.content.map(b=>b.text||'').join('');
+}
+
+// ═══════════════════════════════════════════
+// TODAY'S PARLAY
+// ═══════════════════════════════════════════
+async function generateParlay(){
+  if(!getKey().startsWith('sk-ant-')){
+    document.getElementById('parlay-container').innerHTML=`<div class="card" style="text-align:center;padding:2rem;color:var(--t2);font-size:13px">Enter your Anthropic API key first.</div>`;
+    return;
+  }
+  document.getElementById('parlay-container').innerHTML=`<div class="card" style="text-align:center;padding:2.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Scanning today's slate, injury reports & line movement...</div></div>`;
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const kelly=kellyFor(S.profile);
+  const numLegs=legsFor();
+  const minConf=confFor();
+  const sys=`You are a sharp sports betting AI. Today is ${today}. Risk profile: ${S.profile}.`;
+  const prompt=`Generate a HIGH PROBABILITY ${numLegs}-leg parlay for today using real teams and realistic matchups.
+Return ONLY valid JSON, no markdown, no backticks:
+{
+  "parlayName":"catchy name",
+  "totalOddsAmerican":"+350",
+  "totalOddsDecimal":4.5,
+  "impliedProbability":0.22,
+  "kellyFraction":${(kelly.min+kelly.max)/2},
+  "legs":[{"num":1,"pick":"Team + bet","detail":"1-sentence sharp reasoning","sport":"NBA","odds":"-110","confidence":0.70}],
+  "wagerNote":"2-3 sentences on sizing and why.",
+  "correlationWarning":null
+}
+Rules: ${numLegs} legs, each confidence >=${minConf}, total odds +250 to +700, mix spreads/totals/MLs, no correlated legs.`;
+  try{
+    const text=await aiCall(sys,prompt,1200);
+    const clean=text.replace(/```json|```/g,'').trim();
+    S.parlay=JSON.parse(clean);
+    renderParlay(S.parlay);
+  }catch(e){
+    document.getElementById('parlay-container').innerHTML=`<div class="card" style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
+  }
+}
+
+function renderParlay(p){
+  const bk=+document.getElementById('bankroll').value||500;
+  const kelly=p.kellyFraction||.02;
+  const wager=Math.min(bk*kelly,bk*.05);
+  const dec=p.totalOddsDecimal||4;
+  const potWin=wager*(dec-1);
+  const total=wager*dec;
+  const riskPct=Math.min(Math.round((wager/bk)*100),100);
+  const arrow=Math.min(riskPct*1.8,93);
+
+  const legs=p.legs.map(l=>{
+    const pct=Math.round(l.confidence*100);
+    const cls=l.confidence>=.70?'hi':l.confidence>=.60?'md':'lo';
+    return `<div class="leg">
+      <div class="leg-num">L${l.num}</div>
+      <div class="leg-body">
+        <div class="leg-pick">${l.pick} <span style="font-size:10px;color:var(--t3);font-weight:400">${l.sport}</span></div>
+        <div class="leg-detail">${l.detail}</div>
+      </div>
+      <div class="leg-right">
+        <div class="leg-odds">${l.odds}</div>
+        <div class="conf-row"><div class="conf-bar"><div class="conf-fill ${cls}" style="width:${pct}%"></div></div><span class="conf-txt">${pct}%</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const warn=p.correlationWarning?`<div style="font-size:11px;color:var(--blue);padding:.5rem .75rem;background:rgba(74,158,255,.08);border-radius:var(--r);border:.5px solid rgba(74,158,255,.3);margin-top:.5rem">⚠ ${p.correlationWarning}</div>`:'';
+
+  const riskLabel=riskPct<=2?'Conservative':riskPct<=4?'Moderate':'Aggressive';
+
+  document.getElementById('parlay-container').innerHTML=`
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:15px;font-weight:500">${p.parlayName} <span class="tag gold">AI PICK</span></div>
+          <div style="font-size:11px;color:var(--t2);margin-top:3px">${p.legs.length}-leg parlay · ${Math.round(p.impliedProbability*100)}% implied hit rate</div>
+        </div>
+        <div class="odds-pill pos">${p.totalOddsAmerican}</div>
+      </div>
+      ${legs}
+      ${warn}
+    </div>
+    <div class="card0">
+      <div style="font-size:12px;font-weight:500;margin-bottom:.6rem">Wager Recommendation</div>
+      <div class="wager-grid">
+        <div class="wbox"><div class="wbox-lbl">Suggested bet</div><div class="wbox-val gold">$${wager.toFixed(2)}</div></div>
+        <div class="wbox"><div class="wbox-lbl">Potential win</div><div class="wbox-val green">+$${potWin.toFixed(2)}</div></div>
+        <div class="wbox"><div class="wbox-lbl">Total return</div><div class="wbox-val blue">$${total.toFixed(2)}</div></div>
+        <div class="wbox"><div class="wbox-lbl">% of bankroll</div><div class="wbox-val">${riskPct}%</div></div>
+      </div>
+      <div style="margin-top:.75rem">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:5px">
+          <span>Risk level: <strong>${riskLabel}</strong></span>
+          <span style="font-family:'DM Mono',monospace">${riskPct}% of bankroll</span>
+        </div>
+        <div class="risk-track"><div class="risk-fill"></div></div>
+        <div class="risk-pointer"><div class="risk-arrow" style="left:${arrow}%"></div></div>
+      </div>
+      <div class="notice" style="margin-top:.65rem">${p.wagerNote}</div>
+      <div class="btn-row">
+        <button class="btn solid" onclick="addParlayToSlip()">+ Add to Slip</button>
+        <button class="btn gold" onclick="saveParlayAsBet(${wager.toFixed(2)})">💾 Log this bet</button>
+      </div>
+    </div>`;
+}
+
+function onBankrollChange(){
+  if(S.parlay) renderParlay(S.parlay);
+  S.prefs.bankroll=+document.getElementById('bankroll').value;
+  lsSet('prefs',JSON.stringify(S.prefs));
+  updateHdrStats();
+}
+
+function addParlayToSlip(){
+  if(!S.parlay) return;
+  S.parlay.legs.forEach(l=>{
+    S.slip.push({sport:l.sport,pick:l.pick,game:l.detail,odds:l.odds,note:'AI pick'});
+  });
+  saveSlip();
+  renderSlip();
+  alert('Parlay legs added to slip!');
+}
+
+function saveParlayAsBet(wager){
+  if(!S.parlay) return;
+  const name=S.parlay.legs.map(l=>l.pick).join(' + ');
+  S.bets.unshift({id:Date.now(),date:new Date().toLocaleDateString(),sport:'Parlay',pick:name,odds:S.parlay.totalOddsAmerican,wager:+wager,result:'pending',pnl:0});
+  saveBets();
+  renderHistory();
+  renderCalendar();
+  updateHdrStats();
+  alert('Parlay logged! Mark result in Tracker when it settles.');
+}
+
+// ═══════════════════════════════════════════
+// CHAT SYSTEM
+// ═══════════════════════════════════════════
+const SYSTEMS={
+  adv:(sport,date)=>`You are a sharp sports betting advisor. Today is ${date}. ${sport!=='All'?'Focus on '+sport+'.':''} Give concise actionable advice with trends, injury context, line value, confidence. Under 180 words. Expert tone. End with a clear recommendation.`,
+  build:(date)=>`You are a pro sports betting analyst. Today is ${date}. Evaluate bets covering: line value, key factors, verdict (SHARP PLAY/ACCEPTABLE/AVOID), Kelly stake %. Under 220 words. Direct and analytical.`,
+  lines:(date)=>`You are a sports betting line movement expert. Today is ${date}. Explain line movements, sharp vs public money, steam moves, reverse line movement. Be technical and concise.`,
+  props:(sport,date)=>`You are a player props specialist. Today is ${date}. Focus on ${sport||'all sports'}. Cover matchup context, recent form, injury status, over/under value, confidence %. Under 200 words.`
+};
+
+async function doChat(channel){
+  const inEl=document.getElementById(channel+'-in');
+  const msg=inEl.value.trim();
+  if(!msg) return;
+  if(!getKey().startsWith('sk-ant-')){ alert('Enter your API key first.'); return; }
+  inEl.value='';
+  appendMsg(channel,msg,'user');
+  const lid=appendMsg(channel,'<div class="dot-pulse"><span></span><span></span><span></span></div>','loading');
+  document.getElementById(channel+'-btn').disabled=true;
+  const today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  let sys='';
+  if(channel==='adv') sys=SYSTEMS.adv(S.sport,today);
+  else if(channel==='build') sys=SYSTEMS.build(today);
+  else if(channel==='lines') sys=SYSTEMS.lines(today);
+  else if(channel==='props') sys=SYSTEMS.props(document.getElementById('prop-sport')?.value||'',today);
+  try{
+    const reply=await aiCall(sys,msg);
+    document.getElementById(lid).remove();
+    appendMsg(channel,reply.replace(/\n/g,'<br>'),'ai');
+  }catch(e){
+    document.getElementById(lid).remove();
+    appendMsg(channel,'Error: '+e.message,'ai');
+  }
+  document.getElementById(channel+'-btn').disabled=false;
+}
+
+function qAsk(channel,text){
+  document.getElementById(channel+'-in').value=text;
+  doChat(channel);
+}
+
+function appendMsg(channel,html,type){
+  const msgsMap={adv:'adv-msgs',build:'build-msgs',lines:'lines-msgs',props:'props-msgs'};
+  const c=document.getElementById(msgsMap[channel]);
+  const d=document.createElement('div');
+  const id='m-'+Date.now()+Math.random().toString(36).substr(2,4);
+  d.id=id; d.className='msg '+type; d.innerHTML=html;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+  return id;
+}
+
+// ═══════════════════════════════════════════
+// BET SLIP
+// ═══════════════════════════════════════════
+function addToSlip(){
+  const sport=document.getElementById('slip-sport').value;
+  const pick=document.getElementById('slip-pick').value.trim();
+  const game=document.getElementById('slip-game').value.trim();
+  const odds=document.getElementById('slip-odds').value.trim();
+  const note=document.getElementById('slip-note').value.trim();
+  if(!pick||!odds){ alert('Pick and odds are required.'); return; }
+  S.slip.push({sport,pick,game,odds,note});
+  saveSlip();
+  renderSlip();
+  document.getElementById('slip-pick').value='';
+  document.getElementById('slip-game').value='';
+  document.getElementById('slip-odds').value='';
+  document.getElementById('slip-note').value='';
+}
+
+function removeFromSlip(i){
+  S.slip.splice(i,1);
+  saveSlip();
+  renderSlip();
+}
+
+function clearSlip(){
+  if(!confirm('Clear bet slip?')) return;
+  S.slip=[];
+  saveSlip();
+  renderSlip();
+}
+
+function renderSlip(){
+  const c=document.getElementById('slip-legs');
+  const s=document.getElementById('slip-summary');
+  updateSlipBadge();
+  if(!S.slip.length){
+    c.innerHTML='<div class="slip-empty">No legs added yet.</div>';
+    s.innerHTML='';
+    return;
+  }
+  c.innerHTML=S.slip.map((b,i)=>`
+    <div class="slip-item">
+      <span class="slip-sport">${b.sport}</span>
+      <div class="slip-body">
+        <div class="slip-pick">${b.pick}</div>
+        ${b.game?`<div class="slip-detail">${b.game}</div>`:''}
+      </div>
+      <span class="slip-odds">${b.odds}</span>
+      <button class="slip-remove" onclick="removeFromSlip(${i})">✕</button>
+    </div>`).join('');
+
+  // Combined odds calc
+  const amToDecimal=o=>{
+    const n=parseInt(o.replace('+',''));
+    if(isNaN(n)) return 1.91;
+    return n>0?(n/100)+1:(100/Math.abs(n))+1;
+  };
+  const dec=S.slip.reduce((acc,b)=>acc*amToDecimal(b.odds),1);
+  const am=dec>=2?'+'+Math.round((dec-1)*100):'-'+Math.round(100/(dec-1));
+  const bk=+document.getElementById('bankroll').value||500;
+  const wager=+(bk*0.02).toFixed(2);
+  s.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--t2)">
+    <span>${S.slip.length}-leg parlay</span>
+    <span class="odds-pill pos">${am}</span>
+  </div>
+  <div style="font-size:11px;color:var(--t3);margin-top:4px">Suggested wager: <span style="font-family:'DM Mono',monospace;color:var(--gold)">$${wager}</span> → potential win: <span style="font-family:'DM Mono',monospace;color:var(--green)">+$${(wager*(dec-1)).toFixed(2)}</span></div>`;
+}
+
+function updateSlipBadge(){
+  const b=document.getElementById('slip-count-badge');
+  b.innerHTML=S.slip.length?` <span style="font-size:10px;background:var(--accent);color:#fff;border-radius:10px;padding:1px 6px;font-weight:600">${S.slip.length}</span>`:'';
+}
+
+function saveSlipToBets(){
+  if(!S.slip.length){ alert('Slip is empty.'); return; }
+  const pick=S.slip.map(b=>b.pick).join(' + ');
+  const amToDecimal=o=>{const n=parseInt(o.replace('+',''));if(isNaN(n))return 1.91;return n>0?(n/100)+1:(100/Math.abs(n))+1;};
+  const dec=S.slip.reduce((acc,b)=>acc*amToDecimal(b.odds),1);
+  const am=dec>=2?'+'+Math.round((dec-1)*100):'-'+Math.round(100/(dec-1));
+  const bk=+document.getElementById('bankroll').value||500;
+  const wager=+(bk*0.02).toFixed(2);
+  S.bets.unshift({id:Date.now(),date:new Date().toLocaleDateString(),sport:S.slip.length>1?'Parlay':S.slip[0].sport,pick,odds:am,wager,result:'pending',pnl:0});
+  saveBets(); renderHistory(); renderCalendar(); updateHdrStats();
+  alert('Bet saved to tracker!');
+}
+
+function exportSlip(){
+  if(!S.slip.length){ alert('Slip is empty.'); return; }
+  const rows=[['Sport','Pick','Game','Odds','Note'],...S.slip.map(b=>[b.sport,b.pick,b.game,b.odds,b.note])];
+  downloadCSV(rows,'parlayiq_slip.csv');
+}
+
+// ═══════════════════════════════════════════
+// BET HISTORY / TRACKER
+// ═══════════════════════════════════════════
+function showAddBetForm(){ document.getElementById('add-bet-form').style.display='block'; }
+function hideAddBetForm(){ document.getElementById('add-bet-form').style.display='none'; }
+
+function logBet(){
+  const sport=document.getElementById('hb-sport').value;
+  const pick=document.getElementById('hb-pick').value.trim();
+  const odds=document.getElementById('hb-odds').value.trim();
+  const wager=+document.getElementById('hb-wager').value;
+  const result=document.getElementById('hb-result').value;
+  if(!pick||!wager){ alert('Pick and wager required.'); return; }
+  const amToDecimal=o=>{const n=parseInt(o.replace('+',''));if(isNaN(n))return 1.91;return n>0?(n/100)+1:(100/Math.abs(n))+1;};
+  const dec=amToDecimal(odds);
+  const pnl=result==='win'?+(wager*(dec-1)).toFixed(2):result==='loss'?-wager:0;
+  S.bets.unshift({id:Date.now(),date:new Date().toLocaleDateString(),sport,pick,odds,wager,result,pnl});
+  saveBets(); renderHistory(); renderCalendar(); updateHdrStats(); updateCharts(); hideAddBetForm();
+  // reset
+  ['hb-pick','hb-odds','hb-wager'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('hb-result').value='pending';
+}
+
+function updateResult(id,val){
+  const bet=S.bets.find(b=>b.id===id);
+  if(!bet) return;
+  const amToDecimal=o=>{const n=parseInt(o.replace('+',''));if(isNaN(n))return 1.91;return n>0?(n/100)+1:(100/Math.abs(n))+1;};
+  const dec=amToDecimal(bet.odds);
+  bet.result=val;
+  bet.pnl=val==='win'?+(bet.wager*(dec-1)).toFixed(2):val==='loss'?-bet.wager:0;
+  saveBets(); renderHistory(); renderCalendar(); updateHdrStats(); updateCharts();
+}
+
+function deleteBet(id){
+  S.bets=S.bets.filter(b=>b.id!==id);
+  saveBets(); renderHistory(); renderCalendar(); updateHdrStats(); updateCharts();
+}
+
+function clearHistory(){
+  S.bets=[]; saveBets(); renderHistory(); renderCalendar(); updateHdrStats(); updateCharts();
+}
+
+function renderHistory(){
+  const w=document.getElementById('history-table-wrap');
+  if(!S.bets.length){
+    w.innerHTML='<div class="empty-state"><div class="big">No Bets Yet</div>Click "+ Log Bet" to start tracking.</div>';
+    return;
+  }
+  w.innerHTML=`<div style="overflow-x:auto"><table class="hist-table">
+    <thead><tr><th>Date</th><th>Sport</th><th>Pick</th><th>Odds</th><th>Wager</th><th>Result</th><th>P&L</th><th></th></tr></thead>
+    <tbody>${S.bets.map(b=>`<tr>
+      <td style="color:var(--t3)">${b.date}</td>
+      <td><span class="tag blue">${b.sport}</span></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${b.pick}">${b.pick}</td>
+      <td style="font-family:'DM Mono',monospace">${b.odds}</td>
+      <td style="font-family:'DM Mono',monospace">$${b.wager}</td>
+      <td>
+        <select class="inp" style="padding:2px 4px;font-size:11px;border-radius:10px" onchange="updateResult(${b.id},this.value)">
+          <option value="pending"${b.result==='pending'?' selected':''}>Pending</option>
+          <option value="win"${b.result==='win'?' selected':''}>Win</option>
+          <option value="loss"${b.result==='loss'?' selected':''}>Loss</option>
+          <option value="push"${b.result==='push'?' selected':''}>Push</option>
+        </select>
+      </td>
+      <td style="font-family:'DM Mono',monospace;color:${b.pnl>0?'var(--green)':b.pnl<0?'var(--red)':'var(--t3)'}">${b.pnl>0?'+':''}${b.pnl!==0?'$'+Math.abs(b.pnl).toFixed(2):'—'}</td>
+      <td><button class="slip-remove" onclick="deleteBet(${b.id})">✕</button></td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function updateHdrStats(){
+  const bk=+document.getElementById('bankroll').value||500;
+  document.getElementById('hdr-bankroll').textContent='$'+bk.toLocaleString();
+  const settled=S.bets.filter(b=>b.result!=='pending');
+  const wins=settled.filter(b=>b.result==='win').length;
+  const losses=settled.filter(b=>b.result==='loss').length;
+  document.getElementById('hdr-record').textContent=`${wins}-${losses}`;
+  const totalPnl=settled.reduce((a,b)=>a+b.pnl,0);
+  const roiEl=document.getElementById('hdr-roi');
+  const totalWagered=settled.reduce((a,b)=>a+b.wager,0);
+  const roi=totalWagered?((totalPnl/totalWagered)*100):0;
+  roiEl.textContent=(roi>=0?'+':'')+roi.toFixed(1)+'%';
+  roiEl.className='hdr-stat-val '+(roi>=0?'green':'red');
+  document.getElementById('tr-pnl').textContent=(totalPnl>=0?'+$':'-$')+Math.abs(totalPnl).toFixed(2);
+  document.getElementById('tr-pnl').className='metric-val '+(totalPnl>=0?'green':'red');
+  document.getElementById('tr-wagered').textContent='$'+totalWagered.toFixed(0);
+  document.getElementById('tr-roi').textContent=settled.length?(roi>=0?'+':'')+roi.toFixed(1)+'%':'—';
+  document.getElementById('tr-roi').className='metric-val '+(roi>=0?'green':'red');
+  document.getElementById('tr-wr').textContent=settled.length?Math.round(wins/settled.length*100)+'%':'—';
+  // streak
+  let streak=0,streakType='';
+  for(const b of S.bets){
+    if(b.result==='pending') continue;
+    if(!streakType){streakType=b.result;streak=1;}
+    else if(b.result===streakType) streak++;
+    else break;
+  }
+  const strEl=document.getElementById('hdr-streak');
+  const strEl2=document.getElementById('tr-streak');
+  const strTxt=streak?`${streak}${streakType==='win'?'W':'L'}`:'—';
+  strEl.textContent=strTxt;
+  strEl.className='hdr-stat-val '+(streakType==='win'?'green':streakType==='loss'?'red':'');
+  strEl2.textContent=strTxt;
+  strEl2.className='metric-val '+(streakType==='win'?'green':streakType==='loss'?'red':'');
+  // best sport
+  const bySport={};
+  settled.forEach(b=>{
+    if(!bySport[b.sport]) bySport[b.sport]={pnl:0,n:0};
+    bySport[b.sport].pnl+=b.pnl; bySport[b.sport].n++;
+  });
+  const best=Object.entries(bySport).sort((a,b)=>b[1].pnl-a[1].pnl)[0];
+  document.getElementById('tr-best-sport').textContent=best?best[0]:'—';
+}
+
+// ═══════════════════════════════════════════
+// CALENDAR HEATMAP
+// ═══════════════════════════════════════════
+function renderCalendar(){
+  const g=document.getElementById('cal-grid');
+  const days=35;
+  const today=new Date();
+  const cells=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date(today); d.setDate(d.getDate()-i);
+    const ds=d.toLocaleDateString();
+    const dayBets=S.bets.filter(b=>b.date===ds&&b.result!=='pending');
+    let cls='empty',label='';
+    if(dayBets.length){
+      const pnl=dayBets.reduce((a,b)=>a+b.pnl,0);
+      if(pnl>0){cls='win';label='+$'+Math.abs(pnl).toFixed(0);}
+      else if(pnl<0){cls='loss';label='-$'+Math.abs(pnl).toFixed(0);}
+      else{cls='break';label='$0';}
+    }
+    cells.push(`<div class="cal-day ${cls}" title="${ds}${label?' · '+label:''}">${d.getDate()}</div>`);
+  }
+  g.innerHTML=cells.join('');
+}
+
+// ═══════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════
+function initCharts(){
+  const pnlCtx=document.getElementById('pnl-chart');
+  const sportCtx=document.getElementById('sport-chart');
+  if(!pnlCtx||!sportCtx) return;
+  const chartDefaults={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' $'+c.parsed.y.toFixed(2)}}}};
+  S.pnlChart=new Chart(pnlCtx,{type:'line',data:{labels:[],datasets:[{data:[],borderColor:'#4a9eff',backgroundColor:'rgba(74,158,255,0.1)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#4a9eff',fill:true,tension:.3}]},options:{...chartDefaults,scales:{x:{ticks:{font:{size:10},maxTicksLimit:6},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>'$'+v},grid:{color:'rgba(0,0,0,0.04)'}}}}});
+  S.sportChart=new Chart(sportCtx,{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:[],borderRadius:4}]},options:{...chartDefaults,scales:{x:{ticks:{font:{size:10}},grid:{display:false}},y:{ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(0,0,0,0.04)'},min:0,max:100}}}});
+  updateCharts();
+}
+
+function updateCharts(){
+  if(!S.pnlChart||!S.sportChart) return;
+  const settled=S.bets.filter(b=>b.result!=='pending').slice().reverse();
+  // P&L cumulative
+  let cum=0;
+  const pnlData=settled.map(b=>{cum+=b.pnl;return{x:b.date,y:+cum.toFixed(2)};});
+  S.pnlChart.data.labels=pnlData.map(d=>d.x);
+  S.pnlChart.data.datasets[0].data=pnlData.map(d=>d.y);
+  S.pnlChart.data.datasets[0].borderColor=cum>=0?'#22c55e':'#ef4444';
+  S.pnlChart.data.datasets[0].backgroundColor=cum>=0?'rgba(34,197,94,0.08)':'rgba(239,68,68,0.08)';
+  S.pnlChart.update();
+  // Sport win rates
+  const bySport={};
+  settled.forEach(b=>{
+    if(!bySport[b.sport]) bySport[b.sport]={w:0,n:0};
+    if(b.result==='win') bySport[b.sport].w++;
+    bySport[b.sport].n++;
+  });
+  const sports=Object.entries(bySport).filter(([,v])=>v.n>0);
+  S.sportChart.data.labels=sports.map(([s])=>s);
+  S.sportChart.data.datasets[0].data=sports.map(([,v])=>Math.round(v.w/v.n*100));
+  S.sportChart.data.datasets[0].backgroundColor=sports.map(([,v])=>{const wr=v.w/v.n;return wr>=.6?'rgba(34,197,94,0.7)':wr>=.45?'rgba(74,158,255,0.6)':'rgba(239,68,68,0.6)';});
+  S.sportChart.update();
+}
+
+// ═══════════════════════════════════════════
+// LINES & FADES
+// ═══════════════════════════════════════════
+async function refreshLines(){
+  const c=document.getElementById('lines-container');
+  c.innerHTML='<div style="padding:1rem;text-align:center"><div class="dot-pulse"><span></span><span></span><span></span></div></div>';
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  try{
+    const res=await aiCall(`You are a sports betting line movement analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `Generate 5 realistic line movement examples for today's games. JSON format:
+{"movements":[{"game":"Team A vs Team B","sport":"NBA","openLine":"-3","currentLine":"-6","direction":"sharp","note":"Brief reason"}]}
+direction is "sharp" (sharp money moving it) or "square" (public money).`,700);
+    const data=JSON.parse(res.replace(/```json|```/g,'').trim());
+    c.innerHTML=data.movements.map(m=>`
+      <div class="line-item">
+        <div class="line-move ${m.direction==='sharp'?'sharp':'sq'}">${m.direction==='sharp'?'↑':'↓'} ${m.currentLine}</div>
+        <div class="line-info">
+          <div class="line-game">${m.game} <span style="font-size:10px;color:var(--t3)">${m.sport}</span></div>
+          <div class="line-detail">Open: ${m.openLine} → Now: ${m.currentLine} · ${m.note}</div>
+        </div>
+        <span class="${m.direction==='sharp'?'sharp-badge':'sq-badge'}">${m.direction==='sharp'?'SHARP':'SQUARE'}</span>
+      </div>`).join('');
+  }catch(e){
+    c.innerHTML=`<div style="font-size:12px;color:var(--red);padding:.5rem">Error loading lines. Check your API key.</div>`;
+  }
+}
+
+async function refreshFades(){
+  const c=document.getElementById('fades-container');
+  c.innerHTML='<div style="padding:1rem;text-align:center"><div class="dot-pulse"><span></span><span></span><span></span></div></div>';
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  try{
+    const res=await aiCall(`You are a contrarian sports betting analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `Generate 4 "fade the public" opportunities for today. JSON format:
+{"fades":[{"game":"Team A vs Team B","sport":"NBA","publicPct":78,"fade":"Fade Team A","note":"Brief contrarian reason"}]}`,600);
+    const data=JSON.parse(res.replace(/```json|```/g,'').trim());
+    c.innerHTML=data.fades.map(f=>`
+      <div class="fade-item">
+        <div class="fade-pct">${f.publicPct}%</div>
+        <div class="fade-info">
+          <div class="fade-game">${f.game} <span style="font-size:10px;color:var(--t3)">${f.sport}</span></div>
+          <div class="fade-note">Public on ${f.fade.replace('Fade ','')} · ${f.note}</div>
+        </div>
+        <span class="fade-rec">${f.fade}</span>
+      </div>`).join('');
+  }catch(e){
+    c.innerHTML=`<div style="font-size:12px;color:var(--red);padding:.5rem">Error loading fades. Check your API key.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// PROP HUNTER
+// ═══════════════════════════════════════════
+async function huntProps(){
+  const sport=document.getElementById('prop-sport').value;
+  const type=document.getElementById('prop-type').value;
+  const filter=document.getElementById('prop-filter').value.trim();
+  const c=document.getElementById('props-container');
+  c.innerHTML=`<div class="card" style="text-align:center;padding:2rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Hunting ${sport} ${type} props...</div></div>`;
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  try{
+    const res=await aiCall(
+      `You are a player props specialist. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `Generate 5 ${sport} ${type} player prop recommendations${filter?' for '+filter:''}. JSON:
+{"props":[{"player":"Name","team":"Team","opponent":"Opponent","line":"24.5","direction":"over","odds":"-115","confidence":0.70,"reasoning":"Brief reason","sport":"${sport}","statType":"${type}"}]}`,900);
+    const data=JSON.parse(res.replace(/```json|```/g,'').trim());
+    c.innerHTML=`<div class="card0">
+      ${data.props.map(p=>{
+        const pct=Math.round(p.confidence*100);
+        const cls=p.confidence>=.70?'hi':p.confidence>=.60?'md':'lo';
+        return `<div class="leg">
+          <div class="leg-num">${p.direction==='over'?'▲':'▼'}</div>
+          <div class="leg-body">
+            <div class="leg-pick">${p.player} ${p.direction.toUpperCase()} ${p.line} ${p.statType} <span style="font-size:10px;color:var(--t3)">${p.sport}</span></div>
+            <div class="leg-detail">${p.team} vs ${p.opponent} · ${p.reasoning}</div>
+          </div>
+          <div class="leg-right">
+            <div class="leg-odds">${p.odds}</div>
+            <div class="conf-row"><div class="conf-bar"><div class="conf-fill ${cls}" style="width:${pct}%"></div></div><span class="conf-txt">${pct}%</span></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }catch(e){
+    c.innerHTML=`<div class="card" style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════
+function exportHistory(){
+  if(!S.bets.length){ alert('No bets to export.'); return; }
+  const rows=[['Date','Sport','Pick','Odds','Wager','Result','P&L'],...S.bets.map(b=>[b.date,b.sport,`"${b.pick}"`,b.odds,'$'+b.wager,b.result,(b.pnl>=0?'+$':'-$')+Math.abs(b.pnl).toFixed(2)])];
+  downloadCSV(rows,'parlayiq_history.csv');
+}
+
+function downloadCSV(rows,filename){
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=filename; a.click();
+}
+
+// ═══════════════════════════════════════════
+// STORAGE — namespaced per user, safe on iOS
+// ═══════════════════════════════════════════
+let CURRENT_USER = null;
+function uKey(k){ return CURRENT_USER ? 'u_'+CURRENT_USER+'_'+k : k; }
+function ls(k){ try{ return localStorage.getItem(uKey(k))||''; }catch(e){ return ''; } }
+function lsJ(k){ try{ return JSON.parse(localStorage.getItem(uKey(k)))||null; }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(uKey(k),v); }catch(e){} }
+function lsRemove(k){ try{ localStorage.removeItem(uKey(k)); }catch(e){} }
+function saveBets(){ lsSet('bets',JSON.stringify(S.bets)); }
+function saveSlip(){ lsSet('slip',JSON.stringify(S.slip)); }
+function getKey(){ try{ return localStorage.getItem('ant_key')||document.getElementById('ant-key').value.trim(); }catch(e){ return document.getElementById('ant-key').value.trim(); } }
+
+// ═══════════════════════════════════════════
+// ACCOUNTS
+// ═══════════════════════════════════════════
+const ACCOUNTS = {
+  'Jackson': { password: 'jackson1', role: 'admin', avatar: 'JK', color: '#4a9eff' },
+  'Brock':   { password: 'brock1',   role: 'user',  avatar: 'BM', color: '#3b82f6' }
+};
+
+function showLogin(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+function hideLogin(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+}
+function attemptLogin(){
+  var user = document.getElementById('login-user').value;
+  var pass = document.getElementById('login-pass').value.trim();
+  var err  = document.getElementById('login-err');
+  var acc  = ACCOUNTS[user];
+  if(!acc || acc.password !== pass){
+    err.textContent = 'Incorrect password. Try again.';
+    document.getElementById('login-pass').value = '';
+    return;
+  }
+  err.textContent = '';
+  CURRENT_USER = user;
+  try{ localStorage.setItem('lc_user', user); }catch(e){}
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  bootApp();
+}
+function logout(){
+  CURRENT_USER = null;
+  try{ localStorage.removeItem('lc_user'); }catch(e){}
+  S.bets=[]; S.slip=[]; S.parlay=null;
+  S.prefs={bankroll:500,profile:'balanced',minConf:62,legs:3};
+  if(S.pnlChart){S.pnlChart.destroy();S.pnlChart=null;}
+  if(S.sportChart){S.sportChart.destroy();S.sportChart=null;}
+  try{ document.getElementById('login-pass').value=''; }catch(e){}
+  try{ document.getElementById('login-err').textContent=''; }catch(e){}
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+function bootApp(){
+  const acc=ACCOUNTS[CURRENT_USER];
+  document.getElementById('hdr-user-name').textContent=CURRENT_USER;
+  document.getElementById('hdr-avatar').textContent=acc.avatar;
+  document.getElementById('hdr-avatar').style.background=acc.color+'22';
+  document.getElementById('hdr-avatar').style.color=acc.color;
+  document.getElementById('hdr-avatar').style.borderColor=acc.color+'55';
+  document.getElementById('api-banner').style.display=acc.role==='admin'?'flex':'none';
+  renderApiSettings();
+  init();
+}
+
+function renderApiSettings(){
+  const block=document.getElementById('api-settings-block');
+  const acc=ACCOUNTS[CURRENT_USER];
+  const keySet=!!ls('ant_key');
+  if(acc.role==='admin'){
+    block.innerHTML=`
+      <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">API Configuration</div>
+      <div style="display:grid;gap:10px">
+        <div>
+          <div style="font-size:12px;color:var(--t2);margin-bottom:4px">Anthropic API Key (required)</div>
+          <div class="row">
+            <input id="settings-ant-key" class="inp inp-mono" type="password" placeholder="sk-ant-..." style="flex:1" value="${ls('ant_key')}"/>
+            <button class="btn solid" onclick="saveFromSettings()">Save Key</button>
+          </div>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px">Powers all AI features for both accounts. Get yours at <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a></div>
+        </div>
+      </div>`;
+  } else {
+    const statusColor = keySet ? 'var(--green)' : 'var(--red)';
+    const statusText  = keySet ? '✓ API key active — all features enabled' : '✗ No API key — ask Jackson to add one';
+    block.innerHTML=`
+      <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">API Status</div>
+      <div style="display:flex;align-items:center;gap:10px;padding:.75rem;background:var(--bg2);border-radius:var(--r);border:.5px solid var(--bd)">
+        <div style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0"></div>
+        <div style="font-size:13px;color:${statusColor};font-weight:500">${statusText}</div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:.6rem">The API key is managed by Jackson. All AI features are shared between both accounts.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// RESPONSIVE SLIP LAYOUT
+// ═══════════════════════════════════════════
+function checkSlipLayout(){
+  var layout=document.getElementById('slip-layout');
+  if(!layout) return;
+  layout.style.gridTemplateColumns=window.innerWidth<680?'1fr':'1fr 340px';
+}
+window.addEventListener('resize',checkSlipLayout);
+
+// ═══════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════
+window.addEventListener('load', function(){
+  checkSlipLayout();
+  // Restore session
+  var saved = '';
+  try{ saved = localStorage.getItem('lc_user')||''; }catch(e){}
+  if(saved && ACCOUNTS[saved]){
+    CURRENT_USER = saved;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    bootApp();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
