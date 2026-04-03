@@ -850,15 +850,34 @@ function savePref(k,v){
 }
 
 // ═══════════════════════════════════════════
-// LIVE GAMES BOARD
+// LIVE GAMES BOARD + SCORES
 // ═══════════════════════════════════════════
+async function fetchScores(sportKeys){
+  const oddsKey = getOddsKey();
+  const scoreMap = {};
+  for(const sportKey of sportKeys){
+    try{
+      const scoresUrl = `https://api.the-odds-api.com/v4/sports/${sportKey}/scores/?apiKey=${oddsKey}&daysFrom=1`;
+      const res = await fetch(PROXY + encodeURIComponent(scoresUrl));
+      if(!res.ok) continue;
+      const data = await res.json();
+      if(!Array.isArray(data)) continue;
+      data.forEach(g => {
+        const key = (g.home_team + '|' + g.away_team).toLowerCase();
+        scoreMap[key] = g;
+      });
+    }catch(e){ continue; }
+  }
+  return scoreMap;
+}
+
 async function loadLiveGames(){
   const sport = document.getElementById('games-sport-filter')?.value || 'All';
   const grid = document.getElementById('live-games-grid');
   const updated = document.getElementById('games-last-updated');
   if(!grid) return;
 
-  grid.innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--t2);font-size:13px;grid-column:1/-1"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.5rem">Loading live odds...</div></div>`;
+  grid.innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--t2);font-size:13px;grid-column:1/-1"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.5rem">Loading live games & scores...</div></div>`;
 
   const games = await fetchTodaysGames(sport);
 
@@ -868,26 +887,62 @@ async function loadLiveGames(){
     return;
   }
 
-  grid.innerHTML = games.map(g=>`
-    <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rl);padding:.85rem 1rem">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+  // Fetch scores for the same sport keys
+  const sportKeys = ODDS_SPORTS[sport] || ODDS_SPORTS['All'];
+  const scoreMap = await fetchScores(sportKeys);
+
+  grid.innerHTML = games.map(g=>{
+    const scoreKey = (g.home + '|' + g.away).toLowerCase();
+    const scoreData = scoreMap[scoreKey];
+    const isLive = scoreData && !scoreData.completed && scoreData.scores;
+    const isFinished = scoreData && scoreData.completed && scoreData.scores;
+    const homeScore = scoreData?.scores?.find(s=>s.name===g.home)?.score;
+    const awayScore = scoreData?.scores?.find(s=>s.name===g.away)?.score;
+    const hasScore = homeScore !== undefined && awayScore !== undefined;
+
+    const liveDot = isLive ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;animation:dp 1.2s ease-in-out infinite"></span>` : '';
+    const statusLabel = isFinished ? `<span style="font-size:9px;color:var(--t3)">FINAL</span>` : isLive ? `<span style="font-size:9px;color:var(--green)">LIVE</span>` : `<span style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace">${g.time}</span>`;
+
+    return `
+    <div style="background:var(--bg3);border:1px solid ${isLive?'rgba(52,211,153,.3)':isFinished?'rgba(96,165,250,.15)':'var(--bd)'};border-radius:var(--rl);padding:.85rem 1rem;${isLive?'box-shadow:0 0 12px rgba(52,211,153,.08)':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
         <span style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">${g.sport}</span>
-        <span style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace">${g.time}</span>
+        <span style="display:flex;align-items:center">${liveDot}${statusLabel}</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-bottom:.65rem">
+
+      ${hasScore ? `
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-bottom:.6rem">
+        <div style="text-align:left">
+          <div style="font-size:11px;font-weight:600;color:var(--t1);line-height:1.2;margin-bottom:3px">${g.away}</div>
+          <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t1)">${awayScore}</div>
+        </div>
+        <div style="font-size:10px;color:var(--t3);font-weight:600;text-align:center">VS</div>
+        <div style="text-align:right">
+          <div style="font-size:11px;font-weight:600;color:var(--t1);line-height:1.2;margin-bottom:3px">${g.home}</div>
+          <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--t1)">${homeScore}</div>
+        </div>
+      </div>` : `
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-bottom:.6rem">
         <div style="font-size:12px;font-weight:600;color:var(--t1);text-align:left;line-height:1.2">${g.away}</div>
         <div style="font-size:10px;color:var(--t3);font-weight:600">@</div>
         <div style="font-size:12px;font-weight:600;color:var(--t1);text-align:right;line-height:1.2">${g.home}</div>
-      </div>
+      </div>`}
+
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:10px;font-family:'DM Mono',monospace">
         ${g.awayML?`<div style="background:var(--bg4);border-radius:6px;padding:3px;text-align:center"><div style="color:var(--t3);font-size:9px;margin-bottom:1px">ML</div><div style="font-weight:600;color:var(--t1)">${g.awayML}</div></div>`:'<div></div>'}
         ${g.total?`<div style="background:var(--bg4);border-radius:6px;padding:3px;text-align:center"><div style="color:var(--t3);font-size:9px;margin-bottom:1px">O/U</div><div style="color:var(--accent);font-weight:600">${g.total}</div></div>`:'<div></div>'}
         ${g.homeML?`<div style="background:var(--bg4);border-radius:6px;padding:3px;text-align:center"><div style="color:var(--t3);font-size:9px;margin-bottom:1px">ML</div><div style="font-weight:600;color:var(--t1)">${g.homeML}</div></div>`:'<div></div>'}
       </div>
       ${g.homeSpread?`<div style="margin-top:5px;text-align:center;font-size:10px;color:var(--t2);font-family:'DM Mono',monospace">Spread: ${g.away} ${g.awaySpread} / ${g.home} ${g.homeSpread}</div>`:''}
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
-  if(updated) updated.textContent=`Updated ${new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} · ${games.length} game${games.length!==1?'s':''} today`;
+  const liveCount = games.filter(g => {
+    const k = (g.home+'|'+g.away).toLowerCase();
+    return scoreMap[k] && !scoreMap[k].completed && scoreMap[k].scores;
+  }).length;
+
+  if(updated) updated.textContent=`Updated ${new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} · ${games.length} game${games.length!==1?'s':''} today${liveCount?` · ${liveCount} live 🟢`:''}`;
 }
 
 // ═══════════════════════════════════════════
