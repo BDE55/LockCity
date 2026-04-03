@@ -348,6 +348,7 @@ select.inp{padding:.46rem .6rem}
 <div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#050810;padding:1.5rem;position:relative;overflow:hidden">
   <div style="position:absolute;top:-30%;left:-20%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(79,142,247,0.08),transparent 70%);pointer-events:none"></div>
   <div style="position:absolute;bottom:-30%;right:-20%;width:60%;height:60%;background:radial-gradient(ellipse,rgba(124,90,247,0.06),transparent 70%);pointer-events:none"></div>
+
   <div style="width:100%;max-width:380px;position:relative;z-index:1">
     <div style="text-align:center;margin-bottom:2.5rem">
       <div style="font-family:'Space Grotesk',sans-serif;font-size:32px;letter-spacing:.5px;font-weight:700;background:linear-gradient(135deg,#fff 0%,#4f8ef7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1">LOCK CITY</div>
@@ -719,9 +720,17 @@ select.inp{padding:.46rem .6rem}
         <div id="slip-legs"><div class="slip-empty">No legs added yet.</div></div>
         <div class="divider"></div>
         <div id="slip-summary"></div>
+        <div style="margin-top:.75rem">
+          <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:6px">Wager Amount</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:.75rem">
+            <span style="font-size:18px;color:var(--t2);font-weight:500">$</span>
+            <input id="slip-wager" class="inp inp-mono" type="number" placeholder="Enter wager..." min="1" style="flex:1;font-size:18px;padding:.6rem .75rem"/>
+          </div>
+          <div id="slip-payout" style="display:none;font-size:12px;color:var(--t2);margin-bottom:.75rem;padding:.5rem .75rem;background:var(--bg4);border-radius:var(--r)"></div>
+        </div>
         <div class="btn-row">
           <button class="btn solid" style="flex:1" onclick="saveSlipToBets()">💾 Save as Bet</button>
-          <button class="btn gold" onclick="exportSlip()">⬇ Export CSV</button>
+          <button class="btn gold" onclick="exportSlip()">⬇ Export</button>
         </div>
       </div>
     </div>
@@ -776,19 +785,43 @@ select.inp{padding:.46rem .6rem}
     </div>
     <div id="settlement-status" style="display:none;margin-bottom:.75rem;padding:.6rem .85rem;border-radius:var(--r);font-size:12px;font-weight:500"></div>
     <div id="add-bet-form" style="display:none;margin-bottom:1rem">
-      <div class="card" style="padding:.85rem">
-        <div style="display:grid;gap:8px">
-          <div class="row">
-            <select id="hb-sport" class="inp" style="width:90px"><option>NBA</option><option>MLB</option><option>NFL</option><option>NHL</option><option>Other</option></select>
-            <input id="hb-pick" class="inp" type="text" placeholder="Pick/parlay description" style="flex:1"/>
+      <div class="card" style="padding:1rem">
+        <div style="font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.85rem">Log a Bet</div>
+        <div style="display:grid;gap:10px">
+          <!-- Row 1: Sport + Pick -->
+          <div style="display:grid;grid-template-columns:100px 1fr;gap:8px">
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Sport</div>
+              <select id="hb-sport" class="inp" style="width:100%"><option>NBA</option><option>MLB</option><option>NFL</option><option>NHL</option><option>Soccer</option><option>UFC/MMA</option><option>Tennis</option><option>Parlay</option><option>Other</option></select>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Pick / Description</div>
+              <input id="hb-pick" class="inp" type="text" placeholder="e.g. Lakers -4.5 vs Warriors" style="width:100%"/>
+            </div>
           </div>
-          <div class="row">
-            <input id="hb-odds" class="inp inp-mono" type="text" placeholder="Closing odds" style="width:90px"/>
-            <input id="hb-open-odds" class="inp inp-mono" type="text" placeholder="Opening odds" style="width:105px"/>
-            <input id="hb-wager" class="inp inp-mono" type="number" placeholder="Wager $" style="width:90px"/>
-            <select id="hb-result" class="inp" style="width:90px"><option value="pending">Pending</option><option value="win">Win</option><option value="loss">Loss</option><option value="push">Push</option></select>
-            <button class="btn solid" onclick="logBet()">Save</button>
-            <button class="btn" onclick="hideAddBetForm()">Cancel</button>
+          <!-- Row 2: Wager + Closing Odds + Opening Odds -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Wager ($)</div>
+              <input id="hb-wager" class="inp inp-mono" type="number" placeholder="100" min="1" style="width:100%"/>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Odds</div>
+              <input id="hb-odds" class="inp inp-mono" type="text" placeholder="-110" style="width:100%"/>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Opening Odds</div>
+              <input id="hb-open-odds" class="inp inp-mono" type="text" placeholder="-105" style="width:100%"/>
+            </div>
+          </div>
+          <!-- Row 3: Result + Buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div>
+              <div style="font-size:10px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Result</div>
+              <select id="hb-result" class="inp" style="width:100%"><option value="pending">Pending</option><option value="win">Win ✓</option><option value="loss">Loss ✗</option><option value="push">Push</option></select>
+            </div>
+            <button class="btn solid" onclick="logBet()" style="align-self:end;padding:.55rem;font-size:13px">💾 Save Bet</button>
+            <button class="btn" onclick="hideAddBetForm()" style="align-self:end;padding:.55rem;font-size:13px">Cancel</button>
           </div>
         </div>
       </div>
@@ -1773,6 +1806,8 @@ function renderSlip(){
   if(!S.slip.length){
     c.innerHTML='<div class="slip-empty">No legs added yet.</div>';
     s.innerHTML='';
+    const payoutEl=document.getElementById('slip-payout');
+    if(payoutEl) payoutEl.style.display='none';
     return;
   }
   c.innerHTML=S.slip.map((b,i)=>`
@@ -1786,21 +1821,37 @@ function renderSlip(){
       <button class="slip-remove" onclick="removeFromSlip(${i})">✕</button>
     </div>`).join('');
 
-  // Combined odds calc
   const amToDecimal=o=>{
-    const n=parseInt(o.replace('+',''));
+    const n=parseInt((o+'').replace('+',''));
     if(isNaN(n)) return 1.91;
     return n>0?(n/100)+1:(100/Math.abs(n))+1;
   };
   const dec=S.slip.reduce((acc,b)=>acc*amToDecimal(b.odds),1);
   const am=dec>=2?'+'+Math.round((dec-1)*100):'-'+Math.round(100/(dec-1));
-  const bk=+document.getElementById('bankroll').value||500;
-  const wager=+(bk*0.02).toFixed(2);
+
   s.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--t2)">
-    <span>${S.slip.length}-leg parlay</span>
+    <span>${S.slip.length}-leg ${S.slip.length>1?'parlay':'bet'}</span>
     <span class="odds-pill pos">${am}</span>
-  </div>
-  <div style="font-size:11px;color:var(--t3);margin-top:4px">Suggested wager: <span style="font-family:'DM Mono',monospace;color:var(--gold)">$${wager}</span> → potential win: <span style="font-family:'DM Mono',monospace;color:var(--green)">+$${(wager*(dec-1)).toFixed(2)}</span></div>`;
+  </div>`;
+
+  // Wire up wager input to live payout preview
+  const wagerEl=document.getElementById('slip-wager');
+  const payoutEl=document.getElementById('slip-payout');
+  if(wagerEl){
+    const updatePayout=()=>{
+      const w=+wagerEl.value;
+      if(w>0 && payoutEl){
+        const profit=+(w*(dec-1)).toFixed(2);
+        const total=+(w*dec).toFixed(2);
+        payoutEl.style.display='block';
+        payoutEl.innerHTML=`Potential win: <strong style="color:var(--green);font-family:var(--font-mono)">+$${profit.toFixed(2)}</strong> &nbsp;·&nbsp; Total return: <strong style="color:var(--accent);font-family:var(--font-mono)">$${total.toFixed(2)}</strong>`;
+      } else if(payoutEl){
+        payoutEl.style.display='none';
+      }
+    };
+    wagerEl.oninput=updatePayout;
+    updatePayout();
+  }
 }
 
 function updateSlipBadge(){
@@ -1810,15 +1861,19 @@ function updateSlipBadge(){
 
 function saveSlipToBets(){
   if(!S.slip.length){ alert('Slip is empty.'); return; }
+  const wagerEl = document.getElementById('slip-wager');
+  const wager = wagerEl ? +wagerEl.value : 0;
+  if(!wager || wager <= 0){ alert('Please enter a wager amount.'); if(wagerEl) wagerEl.focus(); return; }
   const pick=S.slip.map(b=>b.pick).join(' + ');
-  const amToDecimal=o=>{const n=parseInt(o.replace('+',''));if(isNaN(n))return 1.91;return n>0?(n/100)+1:(100/Math.abs(n))+1;};
+  const amToDecimal=o=>{const n=parseInt((o+'').replace('+',''));if(isNaN(n))return 1.91;return n>0?(n/100)+1:(100/Math.abs(n))+1;};
   const dec=S.slip.reduce((acc,b)=>acc*amToDecimal(b.odds),1);
   const am=dec>=2?'+'+Math.round((dec-1)*100):'-'+Math.round(100/(dec-1));
-  const bk=+document.getElementById('bankroll').value||500;
-  const wager=+(bk*0.02).toFixed(2);
   S.bets.unshift({id:Date.now(),date:new Date().toLocaleDateString(),sport:S.slip.length>1?'Parlay':S.slip[0].sport,pick,odds:am,wager,result:'pending',pnl:0});
   saveBets(); renderHistory(); renderCalendar(); updateHdrStats();
-  alert('Bet saved to tracker!');
+  if(wagerEl) wagerEl.value='';
+  const payoutEl = document.getElementById('slip-payout');
+  if(payoutEl) payoutEl.style.display='none';
+  alert('Bet saved to tracker! 💾');
 }
 
 function exportSlip(){
