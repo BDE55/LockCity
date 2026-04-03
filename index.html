@@ -1959,9 +1959,9 @@ async function fetchInjuryIntel(){
   const gameCtx = formatGamesForAI(games);
   try{
     const res = await aiCall(
-      `You are an expert sports injury analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
-      `TODAY'S ${sport.toUpperCase()} GAMES:\n${gameCtx}\n\nAnalyze key injury and lineup news for these games. For each notable injury or lineup change, assess how it affects the betting line.\nJSON: {"reports":[{"player":"Name","team":"Team","status":"Out/Questionable/GTD","impact":"High/Medium/Low","line_effect":"Brief explanation of how this shifts the line and which side to lean","game":"Matchup"}]}\nInclude 4-6 most impactful reports. Focus on players whose absence meaningfully moves lines.`,
-      900
+      `You are an expert sports injury analyst. Today is ${today}. Return ONLY valid compact JSON, no markdown.`,
+      `TODAY'S ${sport.toUpperCase()} GAMES:\n${gameCtx}\n\nList the 4 most impactful injuries/lineup changes for these games. Return ONLY this JSON:\n{"reports":[{"player":"Name","team":"Team","status":"Out","impact":"High","line_effect":"One sentence max","game":"Away @ Home"}]}\nStatus values: Out, Questionable, GTD, Healthy. Impact: High, Medium, Low.`,
+      800
     );
     const data = JSON.parse(res.replace(/```json|```/g,'').trim());
     c.innerHTML = data.reports.map(r => {
@@ -1992,9 +1992,9 @@ async function fetchWeatherIntel(){
   const mlbCtx = formatGamesForAI(games);
   try{
     const res = await aiCall(
-      `You are a sports weather analyst specializing in how conditions affect betting totals. Today is ${today}. Return ONLY JSON, no markdown.`,
-      `TODAY'S MLB GAMES:\n${mlbCtx}\n\nFor each game, analyze expected weather conditions and how they affect the total. Use your knowledge of typical April weather in each city.\nJSON: {"weather":[{"game":"Away @ Home","stadium":"Stadium Name","city":"City","conditions":"Brief weather description","temp":"XX°F","wind":"X mph direction","total_impact":"Over/Under/Neutral","reasoning":"Why conditions affect the total this way","recommendation":"Lean Over/Lean Under/Neutral"}]}\nInclude all games listed. Be specific about wind direction (blowing in/out matters most).`,
-      900
+      `You are a sports weather analyst. Today is ${today}. Return ONLY valid compact JSON, no markdown.`,
+      `TODAY'S MLB GAMES:\n${mlbCtx}\n\nAnalyze weather for each game. Return ONLY this JSON:\n{"weather":[{"game":"Away @ Home","stadium":"Name","city":"City","conditions":"Brief","temp":"72F","wind":"12mph out","total_impact":"Over","reasoning":"One sentence","recommendation":"Lean Over"}]}\nRecommendation: Lean Over, Lean Under, or Neutral. Keep reasoning under 12 words.`,
+      800
     );
     const data = JSON.parse(res.replace(/```json|```/g,'').trim());
     c.innerHTML = data.weather.map(w => {
@@ -2286,9 +2286,9 @@ async function loadSharpMoney(){
   const gameCtx = formatGamesForAI(games);
   try{
     const res = await aiCall(
-      `You are a sharp money analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
-      `TODAY'S ${sport} GAMES:\n${gameCtx}\n\nFor each game, estimate the public bet % vs sharp money % based on typical betting patterns, public favorites, and line movement signals.\nJSON: {"splits":[{"game":"Away @ Home","sport":"${sport}","publicBetPct":72,"sharpMoneyPct":28,"publicSide":"Away Team","sharpSide":"Home Team","signal":"steam/reverse/neutral","note":"Brief explanation of divergence","recommendation":"Sharp side: Home Team +2.5"}]}\nsignal: 'steam' = sharp action, 'reverse' = public % high but money % low, 'neutral' = no clear signal.`,
-      900
+      `You are a sharp money analyst. Today is ${today}. Return ONLY valid compact JSON, no markdown, no line breaks inside strings.`,
+      `TODAY'S ${sport} GAMES:\n${gameCtx}\n\nFor each game estimate public bet % vs sharp money %. Return ONLY this JSON with no extra text:\n{"splits":[{"game":"Away @ Home","publicBetPct":72,"sharpMoneyPct":28,"publicSide":"Team","sharpSide":"Team","signal":"steam","note":"One short sentence","recommendation":"Sharp side: Team"}]}\nSignal values: steam, reverse, neutral. Keep note under 10 words. Include max 5 games.`,
+      1200
     );
     const data = JSON.parse(res.replace(/```json|```/g,'').trim());
     c.innerHTML = data.splits.map(s=>{
