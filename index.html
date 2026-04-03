@@ -347,62 +347,184 @@ select.inp{padding:.46rem .6rem}
       <div style="font-size:10px;color:#3d5070;letter-spacing:3px;text-transform:uppercase;margin-top:8px;font-family:'Inter',sans-serif;font-weight:500">LLC · INNOVATION THAT EXCITES</div>
       <div style="width:40px;height:1px;background:linear-gradient(90deg,transparent,rgba(79,142,247,0.5),transparent);margin:1rem auto 0"></div>
     </div>
+
     <div style="background:rgba(12,18,32,0.8);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.07);border-top-color:rgba(255,255,255,0.12);border-radius:24px;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.7),0 1px 0 rgba(255,255,255,0.06) inset">
-      <div style="font-size:11px;font-weight:600;margin-bottom:1.5rem;color:#3d5070;text-align:center;letter-spacing:1.5px;text-transform:uppercase;font-family:'Inter',sans-serif">Member Access</div>
-      <div style="display:grid;gap:14px">
-        <div>
-          <div style="font-size:11px;color:#3d5070;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;font-family:'Inter',sans-serif">Username</div>
-          <select id="login-user" style="width:100%;font-size:16px;padding:13px 15px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:rgba(17,24,39,0.9);color:#f0f4ff;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;appearance:none;transition:all .2s" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
-            <option value="Jackson">Jackson</option>
-            <option value="Brock">Brock</option>
-          </select>
-        </div>
-        <div>
-          <div style="font-size:11px;color:#3d5070;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;font-family:'Inter',sans-serif">Password</div>
-          <input id="login-pass" type="password" placeholder="Enter password" style="width:100%;font-size:16px;padding:13px 15px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:rgba(17,24,39,0.9);color:#f0f4ff;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;transition:all .2s"/>
-        </div>
-        <div id="login-err" style="font-size:13px;color:#ff6b7a;text-align:center;min-height:18px;font-family:'Inter',sans-serif"></div>
-        <input type="button" id="login-btn" value="SIGN IN" style="width:100%;padding:15px;background:linear-gradient(135deg,#1d4ed8,#4f8ef7);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;border:none;border-radius:14px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:0 4px 20px rgba(79,142,247,0.45);transition:all .2s"/>
+
+      <!-- Tab switcher -->
+      <div style="display:flex;gap:0;margin-bottom:1.5rem;background:rgba(17,24,39,0.6);border-radius:10px;padding:3px">
+        <button id="tab-login-btn" onclick="switchAuthTab('login')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;background:linear-gradient(135deg,#1d4ed8,#4f8ef7);color:#fff;box-shadow:0 2px 8px rgba(79,142,247,0.3)">Sign In</button>
+        <button id="tab-register-btn" onclick="switchAuthTab('register')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border:none;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;background:transparent;color:#3d5070">Register</button>
       </div>
-      <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.05);font-size:11px;color:#3d5070;line-height:1.6;text-align:center;font-family:'Inter',sans-serif">
-        Each account has its own bets, bankroll &amp; stats.
+
+      <!-- LOGIN FORM -->
+      <div id="auth-login">
+        <div style="display:grid;gap:14px">
+          <div>
+            <div style="font-size:11px;color:#3d5070;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;font-family:'Inter',sans-serif">Username</div>
+            <select id="login-user" style="width:100%;font-size:16px;padding:13px 15px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:rgba(17,24,39,0.9);color:#f0f4ff;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;appearance:none;transition:all .2s">
+              <option value="Jackson">Jackson</option>
+              <option value="Brock">Brock</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#3d5070;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;font-family:'Inter',sans-serif">Password</div>
+            <input id="login-pass" type="password" placeholder="Enter password" style="width:100%;font-size:16px;padding:13px 15px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:rgba(17,24,39,0.9);color:#f0f4ff;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;transition:all .2s"/>
+          </div>
+          <div id="login-err" style="font-size:13px;color:#ff6b7a;text-align:center;min-height:18px;font-family:'Inter',sans-serif"></div>
+          <input type="button" id="login-btn" value="SIGN IN" style="width:100%;padding:15px;background:linear-gradient(135deg,#1d4ed8,#4f8ef7);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;border:none;border-radius:14px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:0 4px 20px rgba(79,142,247,0.45)"/>
+        </div>
       </div>
+
+      <!-- REGISTER FORM -->
+      <div id="auth-register" style="display:none">
+        <div style="display:grid;gap:14px">
+          <div>
+            <div style="font-size:11px;color:#3d5070;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;font-family:'Inter',sans-serif">Username</div>
+            <input id="reg-user" type="text" placeholder="Choose a username" autocomplete="off" style="width:100%;font-size:16px;padding:13px 15px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:rgba(17,24,39,0.9);color:#f0f4ff;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;transition:all .2s"/>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#3d5070;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;font-family:'Inter',sans-serif">Password</div>
+            <input id="reg-pass" type="password" placeholder="Choose a password" style="width:100%;font-size:16px;padding:13px 15px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:rgba(17,24,39,0.9);color:#f0f4ff;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;transition:all .2s"/>
+          </div>
+          <div>
+            <div style="font-size:11px;color:#3d5070;margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;font-family:'Inter',sans-serif">Confirm Password</div>
+            <input id="reg-confirm" type="password" placeholder="Confirm password" style="width:100%;font-size:16px;padding:13px 15px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;background:rgba(17,24,39,0.9);color:#f0f4ff;font-family:'Inter',sans-serif;outline:none;-webkit-appearance:none;transition:all .2s"/>
+          </div>
+          <div style="font-size:12px;color:#3d5070;background:rgba(79,142,247,0.06);border:1px solid rgba(79,142,247,0.15);border-radius:10px;padding:.75rem;font-family:'Inter',sans-serif;line-height:1.6">
+            🔐 New accounts require approval by <strong style="color:#4f8ef7">Jackson (admin)</strong> before you can sign in.
+          </div>
+          <div id="reg-err" style="font-size:13px;color:#ff6b7a;text-align:center;min-height:18px;font-family:'Inter',sans-serif"></div>
+          <input type="button" id="reg-btn" value="REQUEST ACCESS" style="width:100%;padding:15px;background:linear-gradient(135deg,#5b21b6,#7c5af7);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;border:none;border-radius:14px;letter-spacing:1px;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:0 4px 20px rgba(124,90,247,0.4)"/>
+        </div>
+      </div>
+
     </div>
     <div style="text-align:center;margin-top:1.25rem;font-size:10px;color:#1e2d45;letter-spacing:.5px;font-family:'Inter',sans-serif">LOCK CITY LLC · ENTERTAINMENT ONLY · 21+</div>
   </div>
 </div>
 
 <script>
-// Inline login script — runs immediately, no dependency on rest of app
+// ═══════════════════════════════════════════
+// USER MANAGEMENT — runs immediately
+// ═══════════════════════════════════════════
 (function(){
-  var DEFAULT_CREDS = { 'Jackson':'jackson1', 'Brock':'brock1' };
+
+  // Built-in accounts (hardcoded)
+  var BUILT_IN = {
+    'Jackson': { password: 'jackson1', role: 'admin' },
+    'Brock':   { password: 'brock1',   role: 'user'  }
+  };
+
+  // Load extra registered users from localStorage
+  function getUsers(){
+    try{
+      var stored = JSON.parse(localStorage.getItem('lc_users')||'{}');
+      return Object.assign({}, BUILT_IN, stored);
+    }catch(e){ return Object.assign({}, BUILT_IN); }
+  }
+
+  function saveUsers(users){
+    // Only save non-built-in users
+    var extra = {};
+    Object.keys(users).forEach(function(u){
+      if(!BUILT_IN[u]) extra[u] = users[u];
+    });
+    try{ localStorage.setItem('lc_users', JSON.stringify(extra)); }catch(e){}
+  }
 
   function getPass(user){
-    try{ return localStorage.getItem('lc_pw_'+user) || DEFAULT_CREDS[user]; }catch(e){ return DEFAULT_CREDS[user]; }
+    var users = getUsers();
+    if(users[user]) return users[user].password;
+    // Fallback: legacy pw override
+    try{ return localStorage.getItem('lc_pw_'+user)||null; }catch(e){ return null; }
   }
+
+  // Populate login dropdown from all approved users
+  function populateUserDropdown(){
+    var sel = document.getElementById('login-user');
+    if(!sel) return;
+    var users = getUsers();
+    sel.innerHTML = '';
+    Object.keys(users).forEach(function(u){
+      if(users[u].approved !== false){
+        var opt = document.createElement('option');
+        opt.value = u; opt.textContent = u;
+        if(u==='Jackson') opt.selected = true;
+        sel.appendChild(opt);
+      }
+    });
+  }
+
+  // Auth tab switcher
+  window.switchAuthTab = function(tab){
+    var loginForm = document.getElementById('auth-login');
+    var regForm = document.getElementById('auth-register');
+    var loginBtn = document.getElementById('tab-login-btn');
+    var regBtn = document.getElementById('tab-register-btn');
+    if(tab==='login'){
+      loginForm.style.display='block'; regForm.style.display='none';
+      loginBtn.style.background='linear-gradient(135deg,#1d4ed8,#4f8ef7)'; loginBtn.style.color='#fff'; loginBtn.style.boxShadow='0 2px 8px rgba(79,142,247,0.3)';
+      regBtn.style.background='transparent'; regBtn.style.color='#3d5070'; regBtn.style.boxShadow='none';
+    } else {
+      loginForm.style.display='none'; regForm.style.display='block';
+      regBtn.style.background='linear-gradient(135deg,#5b21b6,#7c5af7)'; regBtn.style.color='#fff'; regBtn.style.boxShadow='0 2px 8px rgba(124,90,247,0.3)';
+      loginBtn.style.background='transparent'; loginBtn.style.color='#3d5070'; loginBtn.style.boxShadow='none';
+    }
+  };
 
   function doLogin(){
     var user = document.getElementById('login-user').value;
     var pass = document.getElementById('login-pass').value;
     var err  = document.getElementById('login-err');
-    if(getPass(user) === pass){
-      err.textContent = '';
-      try{ localStorage.removeItem('lc_user'); }catch(e){}
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-      if(typeof CURRENT_USER !== 'undefined') CURRENT_USER = user;
-      if(typeof bootApp === 'function') bootApp();
-    } else {
-      err.textContent = 'Incorrect password. Try again.';
-      document.getElementById('login-pass').value = '';
-    }
+    var users = getUsers();
+    var acc = users[user];
+    if(!acc){ err.textContent = 'User not found.'; return; }
+    if(acc.approved === false){ err.textContent = 'Account pending admin approval.'; document.getElementById('login-pass').value=''; return; }
+    if(getPass(user) !== pass && acc.password !== pass){ err.textContent = 'Incorrect password. Try again.'; document.getElementById('login-pass').value=''; return; }
+    err.textContent = '';
+    try{ localStorage.removeItem('lc_user'); }catch(e){}
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    if(typeof CURRENT_USER !== 'undefined') CURRENT_USER = user;
+    if(typeof bootApp === 'function') bootApp();
   }
 
-  var btn  = document.getElementById('login-btn');
-  var pass = document.getElementById('login-pass');
-  btn.addEventListener('click', doLogin);
-  btn.addEventListener('touchend', function(e){ e.preventDefault(); doLogin(); });
-  pass.addEventListener('keyup', function(e){ if(e.keyCode===13) doLogin(); });
+  function doRegister(){
+    var user = document.getElementById('reg-user').value.trim();
+    var pass = document.getElementById('reg-pass').value;
+    var confirm = document.getElementById('reg-confirm').value;
+    var err = document.getElementById('reg-err');
+    if(!user||user.length<2){ err.textContent='Username must be at least 2 characters.'; return; }
+    if(!pass||pass.length<4){ err.textContent='Password must be at least 4 characters.'; return; }
+    if(pass!==confirm){ err.textContent='Passwords do not match.'; return; }
+    var users = getUsers();
+    if(users[user]){ err.textContent='Username already taken.'; return; }
+    // Register as pending
+    var extra = {};
+    try{ extra = JSON.parse(localStorage.getItem('lc_users')||'{}'); }catch(e){}
+    extra[user] = { password: pass, role: 'user', approved: false };
+    try{ localStorage.setItem('lc_users', JSON.stringify(extra)); }catch(e){}
+    err.style.color='#2dd4a0';
+    err.textContent='✓ Request sent! Jackson will approve your account.';
+    document.getElementById('reg-user').value='';
+    document.getElementById('reg-pass').value='';
+    document.getElementById('reg-confirm').value='';
+  }
+
+  // Init
+  populateUserDropdown();
+
+  var loginBtn = document.getElementById('login-btn');
+  var regBtn = document.getElementById('reg-btn');
+  var passEl = document.getElementById('login-pass');
+  var regConfirm = document.getElementById('reg-confirm');
+
+  loginBtn.addEventListener('click', doLogin);
+  loginBtn.addEventListener('touchend', function(e){ e.preventDefault(); doLogin(); });
+  passEl.addEventListener('keyup', function(e){ if(e.keyCode===13) doLogin(); });
+  if(regBtn){ regBtn.addEventListener('click', doRegister); }
+  if(regConfirm){ regConfirm.addEventListener('keyup', function(e){ if(e.keyCode===13) doRegister(); }); }
+
 })();
 </script>
 
@@ -953,13 +1075,24 @@ select.inp{padding:.46rem .6rem}
     </div>
   </div>
 
-  <div class="card0">
-    <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Data Management</div>
-    <div class="btn-row">
-      <button class="btn gold" onclick="exportHistory()">⬇ Export All Bets (CSV)</button>
-      <button class="btn danger" onclick="clearHistory()">🗑 Clear Bet History</button>
-      <button class="btn danger" onclick="if(confirm('Reset everything?')){localStorage.clear();location.reload()}">⚠ Reset App</button>
+  <div class="card0" id="admin-data-panel">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem">
+      <div style="font-size:13px;font-weight:500">Data Management</div>
+      <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,107,122,0.12);color:var(--red);border:1px solid rgba(255,107,122,0.2);font-family:var(--font-mono)">ADMIN ONLY</span>
     </div>
+    <div class="btn-row">
+      <button class="btn gold" onclick="exportHistory()">⬇ Export Bets CSV</button>
+      <button class="btn danger" onclick="clearHistory()">🗑 Clear Bet History</button>
+      <button class="btn danger" onclick="if(confirm('Reset everything? This cannot be undone.')){localStorage.clear();location.reload()}">⚠ Reset App</button>
+    </div>
+  </div>
+
+  <div class="card0" id="admin-users-panel">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:.85rem">
+      <div style="font-size:13px;font-weight:500">User Management</div>
+      <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,107,122,0.12);color:var(--red);border:1px solid rgba(255,107,122,0.2);font-family:var(--font-mono)">ADMIN ONLY</span>
+    </div>
+    <div id="user-management-list"></div>
   </div>
 </div>
 
@@ -1179,6 +1312,7 @@ function showTab(name,btn){
   if(name==='lines'){ loadLiveGames(); refreshLines(); refreshFades(); }
   if(name==='intel'){ renderAdvancedAnalytics(); }
   if(name==='odds'){ loadOddsComparison(); }
+  if(name==='settings' && isAdmin()){ renderUserManagement(); }
 }
 
 // ═══════════════════════════════════════════
@@ -2397,10 +2531,35 @@ function savePrefsCloud(){
 // ═══════════════════════════════════════════
 // ACCOUNTS
 // ═══════════════════════════════════════════
-const ACCOUNTS = {
-  'Jackson': { password: 'jackson1', role: 'admin', avatar: 'JK', color: '#4a9eff' },
-  'Brock':   { password: 'brock1',   role: 'user',  avatar: 'BM', color: '#3b82f6' }
+// ═══════════════════════════════════════════
+// ACCOUNTS — dynamic registry
+// ═══════════════════════════════════════════
+const BUILT_IN_ACCOUNTS = {
+  'Jackson': { password: 'jackson1', role: 'admin', avatar: 'JK', color: '#4a9eff', approved: true },
+  'Brock':   { password: 'brock1',   role: 'user',  avatar: 'BM', color: '#7c5af7', approved: true }
 };
+
+function getAllAccounts(){
+  var extra = {};
+  try{ extra = JSON.parse(localStorage.getItem('lc_users')||'{}'); }catch(e){}
+  var all = Object.assign({}, BUILT_IN_ACCOUNTS);
+  Object.keys(extra).forEach(u => {
+    if(!all[u]) all[u] = {
+      password: extra[u].password,
+      role: extra[u].role||'user',
+      approved: extra[u].approved===true,
+      avatar: u.slice(0,2).toUpperCase(),
+      color: '#' + Math.abs(u.split('').reduce((a,c)=>a*31+c.charCodeAt(0),0)).toString(16).slice(0,6).padStart(6,'4f8ef7')
+    };
+  });
+  return all;
+}
+
+const ACCOUNTS = new Proxy({}, {
+  get(_, key){ return getAllAccounts()[key]; }
+});
+
+function isAdmin(){ return getAllAccounts()[CURRENT_USER]?.role === 'admin'; }
 
 function showLogin(){
   document.getElementById('login-screen').style.display='flex';
@@ -2440,16 +2599,123 @@ function logout(){
   document.getElementById('app').style.display='none';
 }
 function bootApp(){
-  const acc=ACCOUNTS[CURRENT_USER];
-  document.getElementById('hdr-user-name').textContent=CURRENT_USER;
-  document.getElementById('hdr-avatar').textContent=acc.avatar;
-  document.getElementById('hdr-avatar').style.background=acc.color+'22';
-  document.getElementById('hdr-avatar').style.color=acc.color;
-  document.getElementById('hdr-avatar').style.borderColor=acc.color+'55';
-  // API banner stays hidden - key managed in Settings only
+  const acc = getAllAccounts()[CURRENT_USER];
+  document.getElementById('hdr-user-name').textContent = CURRENT_USER;
+  document.getElementById('hdr-avatar').textContent = acc.avatar;
+  document.getElementById('hdr-avatar').style.background = acc.color+'22';
+  document.getElementById('hdr-avatar').style.color = acc.color;
+  document.getElementById('hdr-avatar').style.borderColor = acc.color+'55';
+  // Show/hide admin-only panels
+  const admin = isAdmin();
+  const adminPanels = ['admin-data-panel','admin-users-panel'];
+  adminPanels.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = admin ? 'block' : 'none';
+  });
   renderApiSettings();
+  if(admin) renderUserManagement();
   resetInactivityTimer();
   init();
+}
+
+function renderUserManagement(){
+  const el = document.getElementById('user-management-list');
+  if(!el) return;
+  var extra = {};
+  try{ extra = JSON.parse(localStorage.getItem('lc_users')||'{}'); }catch(e){}
+  const pending = Object.keys(extra).filter(u => extra[u].approved === false);
+  const approved = Object.keys(extra).filter(u => extra[u].approved === true);
+
+  let html = '';
+
+  // Pending approvals
+  if(pending.length){
+    html += `<div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.5rem">⏳ Pending Approval (${pending.length})</div>`;
+    pending.forEach(u => {
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">${u}</div>
+        <span style="font-size:10px;color:var(--t3);font-family:var(--font-mono)">user</span>
+        <button class="btn solid" style="font-size:11px;padding:.3rem .75rem" onclick="approveUser('${u}')">✓ Approve</button>
+        <button class="btn danger" style="font-size:11px;padding:.3rem .75rem" onclick="denyUser('${u}')">✗ Deny</button>
+      </div>`;
+    });
+    html += '<div style="margin-bottom:.75rem"></div>';
+  }
+
+  // Built-in accounts
+  html += `<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.5rem">Core Members</div>`;
+  Object.keys(BUILT_IN_ACCOUNTS).forEach(u => {
+    const acc = BUILT_IN_ACCOUNTS[u];
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,0.03)">
+      <div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">${u}</div>
+      <span style="font-size:10px;font-weight:700;color:${acc.role==='admin'?'var(--accent)':'var(--t3)'};font-family:var(--font-mono)">${acc.role.toUpperCase()}</span>
+      <span class="status-badge win">Active</span>
+    </div>`;
+  });
+
+  // Approved extras
+  if(approved.length){
+    html += `<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin:.75rem 0 .5rem">Registered Users</div>`;
+    approved.forEach(u => {
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,0.03)">
+        <div style="flex:1;font-size:13px;font-weight:600;color:var(--t1)">${u}</div>
+        <span style="font-size:10px;color:var(--t3);font-family:var(--font-mono)">user</span>
+        <span class="status-badge win">Active</span>
+        <button class="btn danger" style="font-size:11px;padding:.3rem .7rem" onclick="removeUser('${u}')">Remove</button>
+      </div>`;
+    });
+  }
+
+  if(!pending.length && !approved.length){
+    html += `<div style="font-size:12px;color:var(--t3);padding:.5rem 0">No pending registrations.</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function approveUser(username){
+  var extra = {};
+  try{ extra = JSON.parse(localStorage.getItem('lc_users')||'{}'); }catch(e){}
+  if(extra[username]){
+    extra[username].approved = true;
+    try{ localStorage.setItem('lc_users', JSON.stringify(extra)); }catch(e){}
+    // Also update login dropdown
+    refreshLoginDropdown();
+    renderUserManagement();
+  }
+}
+
+function denyUser(username){
+  if(!confirm(`Deny and delete ${username}'s request?`)) return;
+  var extra = {};
+  try{ extra = JSON.parse(localStorage.getItem('lc_users')||'{}'); }catch(e){}
+  delete extra[username];
+  try{ localStorage.setItem('lc_users', JSON.stringify(extra)); }catch(e){}
+  renderUserManagement();
+}
+
+function removeUser(username){
+  if(!confirm(`Remove ${username} from the app?`)) return;
+  var extra = {};
+  try{ extra = JSON.parse(localStorage.getItem('lc_users')||'{}'); }catch(e){}
+  delete extra[username];
+  try{ localStorage.setItem('lc_users', JSON.stringify(extra)); }catch(e){}
+  refreshLoginDropdown();
+  renderUserManagement();
+}
+
+function refreshLoginDropdown(){
+  var sel = document.getElementById('login-user');
+  if(!sel) return;
+  var users = getAllAccounts();
+  sel.innerHTML = '';
+  Object.keys(users).forEach(u => {
+    if(users[u].approved !== false){
+      var opt = document.createElement('option');
+      opt.value = u; opt.textContent = u;
+      sel.appendChild(opt);
+    }
+  });
 }
 
 function saveOddsKey(){
@@ -2469,7 +2735,7 @@ function renderApiSettings(){
   const acc=ACCOUNTS[CURRENT_USER];
   const keySet=!!ls('ant_key');
   const oddsKey=getOddsKey();
-  if(acc.role==='admin'){
+  if(isAdmin()){
     block.innerHTML=`
       <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">API Configuration</div>
       <div style="display:grid;gap:12px">
