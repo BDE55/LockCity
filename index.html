@@ -743,6 +743,16 @@ select.inp{padding:.44rem .6rem}
   </div>
 
   <div class="card0">
+    <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Cloud Sync</div>
+    <div id="sync-status" style="font-size:12px;color:var(--t2);margin-bottom:.75rem;padding:.6rem .85rem;background:var(--bg2);border-radius:var(--r);border:1px solid var(--bd)">Tap Test Sync to check connection</div>
+    <div class="btn-row">
+      <button class="btn solid" onclick="testSync()">🔄 Test Sync</button>
+      <button class="btn gold" onclick="forcePushToCloud()">⬆ Push to Cloud</button>
+      <button class="btn gold" onclick="forcePullFromCloud()">⬇ Pull from Cloud</button>
+    </div>
+  </div>
+
+  <div class="card0">
     <div style="font-size:13px;font-weight:500;margin-bottom:.75rem">Data Management</div>
     <div class="btn-row">
       <button class="btn gold" onclick="exportHistory()">⬇ Export All Bets (CSV)</button>
@@ -777,7 +787,7 @@ let S = {
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
-function init(){
+async function init(){
   document.getElementById('live-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   const k = ls('ant_key');
   if(k){
@@ -785,12 +795,15 @@ function init(){
     if(antKey) antKey.value = k;
     bannerOk();
   }
-  const prefs = lsJ('prefs');
-  if(prefs) S.prefs = {...S.prefs,...prefs};
-  const bets = lsJ('bets');
-  if(bets) S.bets = bets;
+
+  // Load from localStorage first (instant)
+  const localPrefs = lsJ('prefs');
+  if(localPrefs) S.prefs = {...S.prefs,...localPrefs};
+  const localBets = lsJ('bets');
+  if(localBets) S.bets = localBets;
   const slip = lsJ('slip');
   if(slip) S.slip = slip;
+
   applyPrefs();
   updateHdrStats();
   renderSlip();
@@ -798,6 +811,43 @@ function init(){
   renderCalendar();
   initCharts();
   setTimeout(()=>{ refreshLines(); refreshFades(); loadLiveGames(); }, 800);
+
+  // Then sync from cloud in background (may have newer data from other device)
+  syncFromCloud();
+}
+
+async function syncFromCloud(){
+  try{
+    const [cloudBets, cloudPrefs] = await Promise.all([
+      cloudGet('bets'),
+      cloudGet('prefs')
+    ]);
+
+    let changed = false;
+
+    if(cloudBets && Array.isArray(cloudBets)){
+      // Use cloud data if it has more bets or more recent data
+      if(cloudBets.length >= S.bets.length){
+        S.bets = cloudBets;
+        lsSet('bets', JSON.stringify(S.bets));
+        changed = true;
+      }
+    }
+
+    if(cloudPrefs && typeof cloudPrefs === 'object'){
+      S.prefs = {...S.prefs, ...cloudPrefs};
+      lsSet('prefs', JSON.stringify(S.prefs));
+      applyPrefs();
+      changed = true;
+    }
+
+    if(changed){
+      updateHdrStats();
+      renderHistory();
+      renderCalendar();
+      updateCharts();
+    }
+  }catch(e){}
 }
 
 function applyPrefs(){
@@ -845,7 +895,7 @@ function getKey(){ return ls('ant_key')||document.getElementById('ant-key').valu
 // ═══════════════════════════════════════════
 function savePref(k,v){
   S.prefs[k]=k==='bankroll'||k==='minConf'||k==='legs'?+v:v;
-  lsSet('prefs',JSON.stringify(S.prefs));
+  savePrefsCloud();
   if(k==='bankroll') document.getElementById('bankroll').value=v;
 }
 
@@ -975,7 +1025,7 @@ function selSport(el,s){
 function setProfile(el,p){
   document.querySelectorAll('.profile-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active'); S.profile=p;
-  S.prefs.profile=p; lsSet('prefs',JSON.stringify(S.prefs));
+  S.prefs.profile=p; savePrefsCloud();
 }
 function kellyFor(p){
   if(p==='conservative') return {min:.01,max:.015};
@@ -1102,7 +1152,7 @@ function renderParlay(p){
 function onBankrollChange(){
   if(S.parlay) renderParlay(S.parlay);
   S.prefs.bankroll=+document.getElementById('bankroll').value;
-  lsSet('prefs',JSON.stringify(S.prefs));
+  savePrefsCloud();
   updateHdrStats();
 }
 
@@ -1684,17 +1734,55 @@ function downloadCSV(rows,filename){
 }
 
 // ═══════════════════════════════════════════
-// STORAGE — namespaced per user, safe on iOS
+// STORAGE — Cloud sync via Cloudflare KV
 // ═══════════════════════════════════════════
 let CURRENT_USER = null;
+const WORKER = 'https://odds-proxy.jacksonbeattie.workers.dev';
+
+// localStorage helpers (instant local cache)
 function uKey(k){ return CURRENT_USER ? 'u_'+CURRENT_USER+'_'+k : k; }
 function ls(k){ try{ return localStorage.getItem(uKey(k))||''; }catch(e){ return ''; } }
 function lsJ(k){ try{ return JSON.parse(localStorage.getItem(uKey(k)))||null; }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(uKey(k),v); }catch(e){} }
 function lsRemove(k){ try{ localStorage.removeItem(uKey(k)); }catch(e){} }
-function saveBets(){ lsSet('bets',JSON.stringify(S.bets)); }
-function saveSlip(){ lsSet('slip',JSON.stringify(S.slip)); }
 function getKey(){ try{ return localStorage.getItem('ant_key')||document.getElementById('ant-key').value.trim(); }catch(e){ return document.getElementById('ant-key').value.trim(); } }
+
+// Cloud read — returns parsed value or null
+async function cloudGet(key){
+  try{
+    const res = await fetch(`${WORKER}/data?user=${encodeURIComponent(CURRENT_USER)}&key=${encodeURIComponent(key)}`);
+    if(!res.ok) return null;
+    const text = await res.text();
+    return text && text !== 'null' ? JSON.parse(text) : null;
+  }catch(e){ return null; }
+}
+
+// Cloud write — fire and forget, also write to localStorage immediately
+async function cloudSet(key, value){
+  lsSet(key, JSON.stringify(value));
+  try{
+    await fetch(`${WORKER}/data`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({user: CURRENT_USER, key, value})
+    });
+  }catch(e){}
+}
+
+// Save bets — write to cloud + local
+function saveBets(){
+  lsSet('bets', JSON.stringify(S.bets));
+  cloudSet('bets', S.bets);
+}
+
+// Save slip — local only (slip is ephemeral)
+function saveSlip(){ lsSet('slip', JSON.stringify(S.slip)); }
+
+// Save prefs — cloud + local
+function savePrefsCloud(){
+  lsSet('prefs', JSON.stringify(S.prefs));
+  cloudSet('prefs', S.prefs);
+}
 
 // ═══════════════════════════════════════════
 // ACCOUNTS
@@ -1961,8 +2049,74 @@ function trySettleBet(bet, games){
 }
 
 // ═══════════════════════════════════════════
-// CHANGE PASSWORD
+// SYNC UTILITIES
 // ═══════════════════════════════════════════
+function setSyncStatus(msg, color){
+  const el = document.getElementById('sync-status');
+  if(el){ el.textContent = msg; el.style.color = color||'var(--t2)'; }
+}
+
+async function testSync(){
+  setSyncStatus('Testing connection...','var(--accent)');
+  try{
+    // Write test value
+    const testVal = {test: true, time: Date.now(), user: CURRENT_USER};
+    const writeRes = await fetch(`${WORKER}/data`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({user: CURRENT_USER, key:'synctest', value: testVal})
+    });
+    if(!writeRes.ok){ setSyncStatus('✗ Write failed: '+writeRes.status,'var(--red)'); return; }
+
+    // Read it back
+    const readRes = await fetch(`${WORKER}/data?user=${encodeURIComponent(CURRENT_USER)}&key=synctest`);
+    if(!readRes.ok){ setSyncStatus('✗ Read failed: '+readRes.status,'var(--red)'); return; }
+    const data = await readRes.json();
+    if(data && data.test){
+      setSyncStatus('✓ Cloud sync working! '+S.bets.length+' bets in cloud.','var(--green)');
+    } else {
+      setSyncStatus('✗ Read returned unexpected data','var(--red)');
+    }
+  }catch(e){
+    setSyncStatus('✗ Error: '+e.message,'var(--red)');
+  }
+}
+
+async function forcePushToCloud(){
+  setSyncStatus('Pushing data to cloud...','var(--accent)');
+  try{
+    await Promise.all([
+      cloudSet('bets', S.bets),
+      cloudSet('prefs', S.prefs)
+    ]);
+    setSyncStatus('✓ Pushed '+S.bets.length+' bets to cloud successfully!','var(--green)');
+  }catch(e){
+    setSyncStatus('✗ Push failed: '+e.message,'var(--red)');
+  }
+}
+
+async function forcePullFromCloud(){
+  setSyncStatus('Pulling data from cloud...','var(--accent)');
+  try{
+    const [cloudBets, cloudPrefs] = await Promise.all([
+      cloudGet('bets'),
+      cloudGet('prefs')
+    ]);
+    if(cloudBets && Array.isArray(cloudBets)){
+      S.bets = cloudBets;
+      lsSet('bets', JSON.stringify(S.bets));
+    }
+    if(cloudPrefs){
+      S.prefs = {...S.prefs,...cloudPrefs};
+      lsSet('prefs', JSON.stringify(S.prefs));
+      applyPrefs();
+    }
+    updateHdrStats(); renderHistory(); renderCalendar(); updateCharts();
+    setSyncStatus('✓ Pulled '+S.bets.length+' bets from cloud!','var(--green)');
+  }catch(e){
+    setSyncStatus('✗ Pull failed: '+e.message,'var(--red)');
+  }
+}
 var DEFAULT_PASSWORDS = { 'Jackson':'jackson1', 'Brock':'brock1' };
 function getStoredPass(user){ try{ return localStorage.getItem('lc_pw_'+user)||DEFAULT_PASSWORDS[user]; }catch(e){ return DEFAULT_PASSWORDS[user]; } }
 
