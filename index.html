@@ -591,8 +591,34 @@ select.inp{padding:.44rem .6rem}
 
 <!-- ══════════════════ LINES & FADES ══════════════════ -->
 <div class="panel" id="tab-lines">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
 
+  <!-- Live Games Board -->
+  <div class="card-accent" style="margin-bottom:1rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--t1)">Today's Games <span class="tag green">LIVE</span></div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px" id="games-last-updated">Tap refresh to load</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <select id="games-sport-filter" class="inp" style="font-size:11px;padding:.3rem .5rem" onchange="loadLiveGames()">
+          <option value="All">All Sports</option>
+          <option value="NBA">NBA</option>
+          <option value="MLB">MLB</option>
+          <option value="NHL">NHL</option>
+          <option value="NFL">NFL</option>
+          <option value="NCAAB">NCAAB</option>
+          <option value="Soccer">Soccer</option>
+          <option value="UFC/MMA">UFC/MMA</option>
+        </select>
+        <button class="btn solid" style="font-size:11px;padding:.3rem .75rem" onclick="loadLiveGames()">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="live-games-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
+      <div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:13px;grid-column:1/-1">Click Refresh to load today's live odds</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
     <div class="card0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:13px;font-weight:500">Sharp Line Movement <span class="tag green">LIVE AI</span></div>
@@ -600,7 +626,6 @@ select.inp{padding:.44rem .6rem}
       </div>
       <div id="lines-container"><div class="empty-state" style="padding:1rem"><div class="dot-pulse"><span></span><span></span><span></span></div></div></div>
     </div>
-
     <div class="card0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:13px;font-weight:500">Fade the Public <span class="tag red">CONTRARIAN</span></div>
@@ -772,7 +797,7 @@ function init(){
   renderHistory();
   renderCalendar();
   initCharts();
-  setTimeout(()=>{ refreshLines(); refreshFades(); }, 800);
+  setTimeout(()=>{ refreshLines(); refreshFades(); loadLiveGames(); }, 800);
 }
 
 function applyPrefs(){
@@ -825,13 +850,56 @@ function savePref(k,v){
 }
 
 // ═══════════════════════════════════════════
-// TABS
+// LIVE GAMES BOARD
+// ═══════════════════════════════════════════
+async function loadLiveGames(){
+  const sport = document.getElementById('games-sport-filter')?.value || 'All';
+  const grid = document.getElementById('live-games-grid');
+  const updated = document.getElementById('games-last-updated');
+  if(!grid) return;
+
+  grid.innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--t2);font-size:13px;grid-column:1/-1"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.5rem">Loading live odds...</div></div>`;
+
+  const games = await fetchTodaysGames(sport);
+
+  if(!games || !games.length){
+    grid.innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:13px;grid-column:1/-1">No games found for today. Check back later or try a different sport.</div>`;
+    if(updated) updated.textContent='No games found';
+    return;
+  }
+
+  grid.innerHTML = games.map(g=>`
+    <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rl);padding:.85rem 1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <span style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.5px">${g.sport}</span>
+        <span style="font-size:10px;color:var(--t3);font-family:'DM Mono',monospace">${g.time}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin-bottom:.65rem">
+        <div style="font-size:12px;font-weight:600;color:var(--t1);text-align:left;line-height:1.2">${g.away}</div>
+        <div style="font-size:10px;color:var(--t3);font-weight:600">@</div>
+        <div style="font-size:12px;font-weight:600;color:var(--t1);text-align:right;line-height:1.2">${g.home}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;font-size:10px;font-family:'DM Mono',monospace">
+        ${g.awayML?`<div style="background:var(--bg4);border-radius:6px;padding:3px;text-align:center"><div style="color:var(--t3);font-size:9px;margin-bottom:1px">ML</div><div style="font-weight:600;color:var(--t1)">${g.awayML}</div></div>`:'<div></div>'}
+        ${g.total?`<div style="background:var(--bg4);border-radius:6px;padding:3px;text-align:center"><div style="color:var(--t3);font-size:9px;margin-bottom:1px">O/U</div><div style="color:var(--accent);font-weight:600">${g.total}</div></div>`:'<div></div>'}
+        ${g.homeML?`<div style="background:var(--bg4);border-radius:6px;padding:3px;text-align:center"><div style="color:var(--t3);font-size:9px;margin-bottom:1px">ML</div><div style="font-weight:600;color:var(--t1)">${g.homeML}</div></div>`:'<div></div>'}
+      </div>
+      ${g.homeSpread?`<div style="margin-top:5px;text-align:center;font-size:10px;color:var(--t2);font-family:'DM Mono',monospace">Spread: ${g.away} ${g.awaySpread} / ${g.home} ${g.homeSpread}</div>`:''}
+    </div>`).join('');
+
+  if(updated) updated.textContent=`Updated ${new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} · ${games.length} game${games.length!==1?'s':''} today`;
+}
+
+// ═══════════════════════════════════════════
+// TABS — auto-load data on switch
 // ═══════════════════════════════════════════
 function showTab(name,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
+  // Auto-refresh live data when switching to relevant tabs
+  if(name==='lines'){ loadLiveGames(); refreshLines(); refreshFades(); }
 }
 
 // ═══════════════════════════════════════════
@@ -1343,22 +1411,33 @@ function updateCharts(){
 // LIVE GAME FETCHER — The Odds API
 // ═══════════════════════════════════════════
 const ODDS_SPORTS = {
-  'Any Sport':  ['basketball_nba','baseball_mlb','icehockey_nhl','americanfootball_nfl','soccer_epl','soccer_uefa_europa_league'],
+  'Any Sport':  ['basketball_nba','baseball_mlb','icehockey_nhl','americanfootball_nfl',
+                 'soccer_epl','soccer_mls','soccer_uefa_champions_league','soccer_uefa_europa_league',
+                 'basketball_ncaab','mma_mixed_martial_arts','americanfootball_ncaaf'],
   'NBA':        ['basketball_nba'],
   'MLB':        ['baseball_mlb'],
   'NHL':        ['icehockey_nhl'],
   'NFL':        ['americanfootball_nfl'],
   'NCAAB':      ['basketball_ncaab'],
-  'Soccer':     ['soccer_epl','soccer_mls','soccer_uefa_europa_league'],
+  'Soccer':     ['soccer_epl','soccer_mls','soccer_uefa_champions_league','soccer_uefa_europa_league',
+                 'soccer_germany_bundesliga','soccer_spain_la_liga','soccer_italy_serie_a','soccer_france_ligue_one'],
   'UFC/MMA':    ['mma_mixed_martial_arts'],
-  'Tennis':     ['tennis_atp_french_open','tennis_wta_french_open'],
-  'Golf':       ['golf_masters_tournament_winner'],
-  'All':        ['basketball_nba','baseball_mlb','icehockey_nhl','americanfootball_nfl','soccer_epl']
+  'Tennis':     ['tennis_atp_french_open','tennis_wta_french_open','tennis_atp_us_open','tennis_wta_us_open',
+                 'tennis_atp_wimbledon','tennis_wta_wimbledon','tennis_atp_australian_open'],
+  'Golf':       ['golf_masters_tournament_winner','golf_us_open_winner','golf_the_open_championship_winner','golf_pga_championship_winner'],
+  'NASCAR':     ['motorsport_nascar_cup_series'],
+  'NCAAF':      ['americanfootball_ncaaf'],
+  'WNBA':       ['basketball_wnba'],
+  'All':        ['basketball_nba','baseball_mlb','icehockey_nhl','americanfootball_nfl',
+                 'soccer_epl','soccer_mls','basketball_ncaab','mma_mixed_martial_arts',
+                 'americanfootball_ncaaf','basketball_wnba']
 };
 
 let _gameCache = {};
-let _gameCacheTime = 0;
-const CACHE_TTL = 15 * 60 * 1000; // 15 min cache
+let _gameCacheTimes = {};
+const CACHE_TTL = 2 * 60 * 1000; // 2 min cache
+
+const PROXY = 'https://odds-proxy.jacksonbeattie.workers.dev/?url=';
 
 async function fetchTodaysGames(sportFilter='Any Sport'){
   const oddsKey = getOddsKey();
@@ -1366,7 +1445,7 @@ async function fetchTodaysGames(sportFilter='Any Sport'){
   const now = Date.now();
 
   // Return cached if fresh
-  if(_gameCache[cacheKey] && (now - _gameCacheTime) < CACHE_TTL){
+  if(_gameCache[cacheKey] && (now - (_gameCacheTimes[cacheKey]||0)) < CACHE_TTL){
     return _gameCache[cacheKey];
   }
 
@@ -1379,8 +1458,8 @@ async function fetchTodaysGames(sportFilter='Any Sport'){
 
   for(const sportKey of sportKeys){
     try{
-      const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${oddsKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&dateFormat=iso`;
-      const res = await fetch(url);
+      const apiUrl = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${oddsKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&dateFormat=iso`;
+      const res = await fetch(PROXY + encodeURIComponent(apiUrl));
       if(!res.ok) continue;
       const games = await res.json();
       if(!Array.isArray(games)) continue;
@@ -1427,7 +1506,7 @@ async function fetchTodaysGames(sportFilter='Any Sport'){
   }
 
   _gameCache[cacheKey] = allGames;
-  _gameCacheTime = now;
+  _gameCacheTimes[cacheKey] = now;
   return allGames;
 }
 
@@ -1725,8 +1804,8 @@ async function checkResults(){
   for(const sport of sports){
     const sportKey = SPORT_KEYS[sport] || SPORT_KEYS['NBA'];
     try{
-      const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/scores/?apiKey=${oddsKey}&daysFrom=3`;
-      const res = await fetch(url);
+      const scoresUrl = `https://api.the-odds-api.com/v4/sports/${sportKey}/scores/?apiKey=${oddsKey}&daysFrom=3`;
+      const res = await fetch(PROXY + encodeURIComponent(scoresUrl));
       if(!res.ok) continue;
       const games = await res.json();
       if(Array.isArray(games)) scores[sport] = games;
@@ -1885,7 +1964,7 @@ window.addEventListener('resize',checkSlipLayout);
 // ═══════════════════════════════════════════
 window.addEventListener('load', function(){
   // Pre-seed Odds API key
-  try{ if(!localStorage.getItem('odds_api_key')) localStorage.setItem('odds_api_key','1e39668314a42d77541c61ca8200fcac'); }catch(e){}
+  try{ localStorage.setItem('odds_api_key','921a3e9fd770e469c21ca0c02d958a54'); }catch(e){}
   checkSlipLayout();
   // Restore session
   var saved = '';
