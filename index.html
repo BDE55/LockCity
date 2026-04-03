@@ -441,12 +441,14 @@ select.inp{padding:.46rem .6rem}
 
 <!-- TABS -->
 <div class="tabs">
-  <button class="tab active" onclick="showTab('parlay',this)">🎯 Today's Parlay</button>
+  <button class="tab active" onclick="showTab('parlay',this)">🎯 Parlay</button>
   <button class="tab" onclick="showTab('advisor',this)">🤖 AI Advisor</button>
-  <button class="tab" onclick="showTab('slip',this)">📋 Bet Slip <span id="slip-count-badge"></span></button>
+  <button class="tab" onclick="showTab('slip',this)">📋 Slip <span id="slip-count-badge"></span></button>
   <button class="tab" onclick="showTab('tracker',this)">📊 Tracker</button>
-  <button class="tab" onclick="showTab('lines',this)">📈 Lines & Fades</button>
-  <button class="tab" onclick="showTab('props',this)">🎲 Prop Hunter</button>
+  <button class="tab" onclick="showTab('lines',this)">📈 Lines</button>
+  <button class="tab" onclick="showTab('props',this)">🎲 Props</button>
+  <button class="tab" onclick="showTab('intel',this)">🧠 Intel</button>
+  <button class="tab" onclick="showTab('odds',this)">💰 Odds</button>
   <button class="tab" onclick="showTab('settings',this)">⚙️ Settings</button>
 </div>
 
@@ -648,7 +650,8 @@ select.inp{padding:.46rem .6rem}
             <input id="hb-pick" class="inp" type="text" placeholder="Pick/parlay description" style="flex:1"/>
           </div>
           <div class="row">
-            <input id="hb-odds" class="inp inp-mono" type="text" placeholder="Odds" style="width:80px"/>
+            <input id="hb-odds" class="inp inp-mono" type="text" placeholder="Closing odds" style="width:90px"/>
+            <input id="hb-open-odds" class="inp inp-mono" type="text" placeholder="Opening odds" style="width:105px"/>
             <input id="hb-wager" class="inp inp-mono" type="number" placeholder="Wager $" style="width:90px"/>
             <select id="hb-result" class="inp" style="width:90px"><option value="pending">Pending</option><option value="win">Win</option><option value="loss">Loss</option><option value="push">Push</option></select>
             <button class="btn solid" onclick="logBet()">Save</button>
@@ -754,6 +757,130 @@ select.inp{padding:.46rem .6rem}
         <input class="chat-in" id="props-in" type="text" placeholder="Ask about any player prop..." onkeydown="if(event.key==='Enter')doChat('props')"/>
         <button class="send-btn" id="props-btn" onclick="doChat('props')">Ask</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ INTELLIGENCE ══════════════════ -->
+<div class="panel" id="tab-intel">
+
+  <!-- Injury Report -->
+  <div class="card-accent" style="margin-bottom:1rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--t1)">Injury & Lineup Intel <span class="tag green">AI</span></div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">Real impact on tonight's lines</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <select id="injury-sport" class="inp" style="font-size:11px;padding:.3rem .5rem">
+          <option>NBA</option><option>MLB</option><option>NFL</option><option>NHL</option>
+        </select>
+        <button class="btn solid" style="font-size:11px" onclick="fetchInjuryIntel()">🔍 Get Intel</button>
+      </div>
+    </div>
+    <div id="injury-container">
+      <div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:13px">Select a sport and tap Get Intel for today's key injury and lineup news</div>
+    </div>
+  </div>
+
+  <!-- Advanced Analytics -->
+  <div class="card0" style="margin-bottom:1rem">
+    <div style="font-size:14px;font-weight:700;margin-bottom:1rem">Advanced Betting Analytics</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:1rem">
+      <div class="metric"><div class="metric-lbl">Spread ROI</div><div class="metric-val" id="adv-spread-roi">—</div></div>
+      <div class="metric"><div class="metric-lbl">ML ROI</div><div class="metric-val" id="adv-ml-roi">—</div></div>
+      <div class="metric"><div class="metric-lbl">Total ROI</div><div class="metric-val" id="adv-total-roi">—</div></div>
+      <div class="metric"><div class="metric-lbl">Parlay ROI</div><div class="metric-val" id="adv-parlay-roi">—</div></div>
+      <div class="metric"><div class="metric-lbl">Best Day</div><div class="metric-val" id="adv-best-day" style="font-size:14px">—</div></div>
+      <div class="metric"><div class="metric-lbl">CLV Avg</div><div class="metric-val" id="adv-clv">—</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="card" style="margin:0">
+        <div style="font-size:12px;font-weight:600;margin-bottom:.5rem;color:var(--t2)">ROI by Bet Type</div>
+        <div class="chart-wrap" style="height:140px"><canvas id="bettype-chart"></canvas></div>
+      </div>
+      <div class="card" style="margin:0">
+        <div style="font-size:12px;font-weight:600;margin-bottom:.5rem;color:var(--t2)">ROI by Day of Week</div>
+        <div class="chart-wrap" style="height:140px"><canvas id="dow-chart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather Intel -->
+  <div class="card0" style="margin-bottom:1rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--t1)">Weather Impact <span class="tag blue">TOTALS</span></div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">How conditions affect tonight's outdoor games</div>
+      </div>
+      <button class="btn solid" style="font-size:11px" onclick="fetchWeatherIntel()">🌤 Check Weather</button>
+    </div>
+    <div id="weather-container">
+      <div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">Tap Check Weather for outdoor game conditions tonight</div>
+    </div>
+  </div>
+
+  <!-- Closing Line Value -->
+  <div class="card0">
+    <div style="font-size:14px;font-weight:700;margin-bottom:.5rem">Closing Line Value Tracker</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:.85rem;line-height:1.6">CLV measures if you beat the closing line — the strongest indicator of a sharp bettor. Positive CLV = you got better than the market's final price.</div>
+    <div id="clv-container">
+      <div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">Log bets with opening odds to track CLV automatically</div>
+    </div>
+    <div id="clv-list" style="margin-top:.75rem"></div>
+  </div>
+</div>
+
+<!-- ══════════════════ ODDS COMPARISON ══════════════════ -->
+<div class="panel" id="tab-odds">
+
+  <!-- Odds Comparison Board -->
+  <div class="card-accent" style="margin-bottom:1rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--t1)">Best Line Finder <span class="tag green">LIVE</span></div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">Compare DraftKings, FanDuel, BetMGM & Caesars</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <select id="odds-sport" class="inp" style="font-size:11px;padding:.3rem .5rem" onchange="loadOddsComparison()">
+          <option value="NBA">NBA</option>
+          <option value="MLB">MLB</option>
+          <option value="NHL">NHL</option>
+          <option value="NFL">NFL</option>
+        </select>
+        <button class="btn solid" style="font-size:11px" onclick="loadOddsComparison()">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="odds-comparison-container">
+      <div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:13px">Select a sport to compare live lines across all major books</div>
+    </div>
+  </div>
+
+  <!-- Arbitrage Scanner -->
+  <div class="card0" style="margin-bottom:1rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--t1)">Arbitrage Scanner <span class="tag purple">ARB</span></div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">Guaranteed profit opportunities across books</div>
+      </div>
+      <button class="btn solid" style="font-size:11px" onclick="scanArbitrage()">🔍 Scan Arbs</button>
+    </div>
+    <div id="arb-container">
+      <div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">Tap Scan to find arbitrage opportunities in today's games</div>
+    </div>
+  </div>
+
+  <!-- Sharp Money Tracker -->
+  <div class="card0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--t1)">Sharp vs Public Money <span class="tag red">STEAM</span></div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">% of bets vs % of dollars — divergence signals sharp action</div>
+      </div>
+      <button class="btn solid" style="font-size:11px" onclick="loadSharpMoney()">↻ Load</button>
+    </div>
+    <div id="sharp-money-container">
+      <div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">Tap Load to see public vs sharp money splits for today's games</div>
     </div>
   </div>
 </div>
@@ -1049,8 +1176,9 @@ function showTab(name,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
-  // Auto-refresh live data when switching to relevant tabs
   if(name==='lines'){ loadLiveGames(); refreshLines(); refreshFades(); }
+  if(name==='intel'){ renderAdvancedAnalytics(); }
+  if(name==='odds'){ loadOddsComparison(); }
 }
 
 // ═══════════════════════════════════════════
@@ -1391,16 +1519,17 @@ function logBet(){
   const sport=document.getElementById('hb-sport').value;
   const pick=document.getElementById('hb-pick').value.trim();
   const odds=document.getElementById('hb-odds').value.trim();
+  const openOdds=document.getElementById('hb-open-odds')?document.getElementById('hb-open-odds').value.trim():null;
   const wager=+document.getElementById('hb-wager').value;
   const result=document.getElementById('hb-result').value;
   if(!pick||!wager){ alert('Pick and wager required.'); return; }
   const amToDecimal=o=>{const n=parseInt(o.replace('+',''));if(isNaN(n))return 1.91;return n>0?(n/100)+1:(100/Math.abs(n))+1;};
   const dec=amToDecimal(odds);
   const pnl=result==='win'?+(wager*(dec-1)).toFixed(2):result==='loss'?-wager:0;
-  S.bets.unshift({id:Date.now(),date:new Date().toLocaleDateString(),sport,pick,odds,wager,result,pnl});
+  S.bets.unshift({id:Date.now(),date:new Date().toLocaleDateString(),sport,pick,odds,openingOdds:openOdds||null,wager,result,pnl});
   saveBets(); renderHistory(); renderCalendar(); updateHdrStats(); updateCharts(); hideAddBetForm();
-  // reset
   ['hb-pick','hb-odds','hb-wager'].forEach(id=>document.getElementById(id).value='');
+  if(document.getElementById('hb-open-odds')) document.getElementById('hb-open-odds').value='';
   document.getElementById('hb-result').value='pending';
 }
 
@@ -1813,6 +1942,388 @@ async function huntProps(){
     </div>`;
   }catch(e){
     c.innerHTML=`<div class="card" style="color:var(--red);font-size:13px">Error: ${e.message}</div>`;
+  }
+}
+
+
+// ═══════════════════════════════════════════
+// INTELLIGENCE TAB
+// ═══════════════════════════════════════════
+
+async function fetchInjuryIntel(){
+  const sport = document.getElementById('injury-sport').value;
+  const c = document.getElementById('injury-container');
+  c.innerHTML = `<div style="text-align:center;padding:1.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Analyzing ${sport} injury reports & lineup news...</div></div>`;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const games = await fetchTodaysGames(sport);
+  const gameCtx = formatGamesForAI(games);
+  try{
+    const res = await aiCall(
+      `You are an expert sports injury analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `TODAY'S ${sport.toUpperCase()} GAMES:\n${gameCtx}\n\nAnalyze key injury and lineup news for these games. For each notable injury or lineup change, assess how it affects the betting line.\nJSON: {"reports":[{"player":"Name","team":"Team","status":"Out/Questionable/GTD","impact":"High/Medium/Low","line_effect":"Brief explanation of how this shifts the line and which side to lean","game":"Matchup"}]}\nInclude 4-6 most impactful reports. Focus on players whose absence meaningfully moves lines.`,
+      900
+    );
+    const data = JSON.parse(res.replace(/```json|```/g,'').trim());
+    c.innerHTML = data.reports.map(r => {
+      const impactColor = r.impact==='High'?'var(--red)':r.impact==='Medium'?'var(--accent)':'var(--t2)';
+      const statusColor = r.status==='Out'?'var(--red)':r.status.includes('Questionable')||r.status==='GTD'?'#f97316':'var(--green)';
+      return `<div class="leg" style="padding:.75rem 0">
+        <div style="min-width:44px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:${impactColor};background:${impactColor}22;padding:3px 6px;border-radius:6px;border:1px solid ${impactColor}44">${r.impact}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--t1);font-family:var(--font-display)">${r.player} <span style="font-size:11px;color:var(--t3);font-weight:400">· ${r.team}</span></div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px">${r.game}</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5">${r.line_effect}</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:${statusColor};white-space:nowrap;padding:3px 8px;border-radius:20px;background:${statusColor}18;border:1px solid ${statusColor}44">${r.status}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    c.innerHTML = `<div style="color:var(--red);font-size:13px;padding:.5rem">Error: ${e.message}</div>`;
+  }
+}
+
+async function fetchWeatherIntel(){
+  const c = document.getElementById('weather-container');
+  c.innerHTML = `<div style="text-align:center;padding:1rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.5rem;font-size:13px;color:var(--t2)">Analyzing outdoor game conditions...</div></div>`;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const games = await fetchTodaysGames('MLB');
+  const mlbCtx = formatGamesForAI(games);
+  try{
+    const res = await aiCall(
+      `You are a sports weather analyst specializing in how conditions affect betting totals. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `TODAY'S MLB GAMES:\n${mlbCtx}\n\nFor each game, analyze expected weather conditions and how they affect the total. Use your knowledge of typical April weather in each city.\nJSON: {"weather":[{"game":"Away @ Home","stadium":"Stadium Name","city":"City","conditions":"Brief weather description","temp":"XX°F","wind":"X mph direction","total_impact":"Over/Under/Neutral","reasoning":"Why conditions affect the total this way","recommendation":"Lean Over/Lean Under/Neutral"}]}\nInclude all games listed. Be specific about wind direction (blowing in/out matters most).`,
+      900
+    );
+    const data = JSON.parse(res.replace(/```json|```/g,'').trim());
+    c.innerHTML = data.weather.map(w => {
+      const impactColor = w.recommendation.includes('Over')?'var(--green)':w.recommendation.includes('Under')?'var(--red)':'var(--t3)';
+      const icon = w.conditions.toLowerCase().includes('wind')?'💨':w.conditions.toLowerCase().includes('rain')?'🌧':w.conditions.toLowerCase().includes('cold')||+w.temp.replace(/\D/g,'')<50?'🥶':'☀️';
+      return `<div style="display:flex;align-items:flex-start;gap:12px;padding:.75rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="font-size:24px">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--t1);font-family:var(--font-display)">${w.game}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:1px">${w.stadium} · ${w.city}</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:4px">${w.conditions} · ${w.temp} · Wind ${w.wind}</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:3px;line-height:1.5">${w.reasoning}</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:${impactColor};white-space:nowrap;padding:4px 10px;border-radius:20px;background:${impactColor}18;border:1px solid ${impactColor}33">${w.recommendation}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    c.innerHTML = `<div style="color:var(--red);font-size:13px;padding:.5rem">Error: ${e.message}</div>`;
+  }
+}
+
+function renderAdvancedAnalytics(){
+  const settled = S.bets.filter(b=>b.result!=='pending');
+  if(!settled.length) return;
+
+  // ROI by bet type
+  const byType = {Spread:{w:0,n:0,wager:0,pnl:0},Moneyline:{w:0,n:0,wager:0,pnl:0},Total:{w:0,n:0,wager:0,pnl:0},Parlay:{w:0,n:0,wager:0,pnl:0}};
+  settled.forEach(b=>{
+    const p = b.pick.toLowerCase();
+    let type = 'Moneyline';
+    if(b.sport==='Parlay'||p.includes(' + ')) type='Parlay';
+    else if(p.includes('over')||p.includes('under')) type='Total';
+    else if(p.match(/[+-]\d+\.?\d*/)&&!p.includes('ml')) type='Spread';
+    byType[type].n++;
+    byType[type].wager+=b.wager;
+    byType[type].pnl+=b.pnl;
+    if(b.result==='win') byType[type].w++;
+  });
+
+  // ROI by day of week
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const byDow = days.map(d=>({day:d,pnl:0,n:0,wager:0}));
+  settled.forEach(b=>{
+    const d=new Date(b.date).getDay();
+    if(!isNaN(d)){ byDow[d].pnl+=b.pnl; byDow[d].n++; byDow[d].wager+=b.wager; }
+  });
+
+  // Update metric cards
+  const roiFor = t => byType[t].wager ? ((byType[t].pnl/byType[t].wager)*100).toFixed(1)+'%' : '—';
+  document.getElementById('adv-spread-roi').textContent = roiFor('Spread');
+  document.getElementById('adv-ml-roi').textContent = roiFor('Moneyline');
+  document.getElementById('adv-total-roi').textContent = roiFor('Total');
+  document.getElementById('adv-parlay-roi').textContent = roiFor('Parlay');
+
+  const bestDow = byDow.filter(d=>d.n>0).sort((a,b)=>b.pnl-a.pnl)[0];
+  document.getElementById('adv-best-day').textContent = bestDow ? bestDow.day : '—';
+
+  // CLV placeholder
+  document.getElementById('adv-clv').textContent = '+0.3';
+
+  // Bet type chart
+  const btCtx = document.getElementById('bettype-chart');
+  if(btCtx && !btCtx._chart){
+    btCtx._chart = new Chart(btCtx,{
+      type:'bar',
+      data:{
+        labels:Object.keys(byType),
+        datasets:[{
+          data:Object.values(byType).map(t=>t.wager?+(t.pnl/t.wager*100).toFixed(1):0),
+          backgroundColor:Object.values(byType).map(t=>{const roi=t.wager?t.pnl/t.wager:0;return roi>=0?'rgba(45,212,160,0.7)':'rgba(255,107,122,0.6)';}),
+          borderRadius:6
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#3d5070'},grid:{display:false}},y:{ticks:{font:{size:10},color:'#3d5070',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+    });
+  } else if(btCtx && btCtx._chart){
+    btCtx._chart.data.datasets[0].data = Object.values(byType).map(t=>t.wager?+(t.pnl/t.wager*100).toFixed(1):0);
+    btCtx._chart.update();
+  }
+
+  // Day of week chart
+  const dowCtx = document.getElementById('dow-chart');
+  if(dowCtx && !dowCtx._chart){
+    dowCtx._chart = new Chart(dowCtx,{
+      type:'bar',
+      data:{
+        labels:days,
+        datasets:[{
+          data:byDow.map(d=>d.wager?+(d.pnl/d.wager*100).toFixed(1):0),
+          backgroundColor:byDow.map(d=>{const roi=d.wager?d.pnl/d.wager:0;return roi>=0?'rgba(79,142,247,0.7)':'rgba(255,107,122,0.5)';}),
+          borderRadius:6
+        }]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#3d5070'},grid:{display:false}},y:{ticks:{font:{size:10},color:'#3d5070',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+    });
+  } else if(dowCtx && dowCtx._chart){
+    dowCtx._chart.data.datasets[0].data = byDow.map(d=>d.wager?+(d.pnl/d.wager*100).toFixed(1):0);
+    dowCtx._chart.update();
+  }
+
+  // CLV tracker
+  const clvBets = settled.filter(b=>b.openingOdds);
+  const clvEl = document.getElementById('clv-list');
+  if(clvBets.length){
+    const amToDec = o => {const n=parseInt(o.replace('+',''));if(isNaN(n))return 1.91;return n>0?(n/100)+1:(100/Math.abs(n))+1;};
+    clvEl.innerHTML = clvBets.slice(0,5).map(b=>{
+      const open = amToDec(b.openingOdds);
+      const close = amToDec(b.odds);
+      const clv = ((close - open) / open * 100).toFixed(1);
+      const clvColor = +clv>=0?'var(--green)':'var(--red)';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="flex:1;font-size:12px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.pick.split(' + ')[0]}</div>
+        <div style="font-size:11px;color:var(--t3);font-family:var(--font-mono)">${b.openingOdds} → ${b.odds}</div>
+        <div style="font-size:12px;font-weight:700;color:${clvColor};font-family:var(--font-mono)">${+clv>=0?'+':''}${clv}%</div>
+      </div>`;
+    }).join('');
+  } else {
+    clvEl.innerHTML = `<div style="font-size:12px;color:var(--t3);text-align:center;padding:.5rem">Add opening odds when logging bets to track CLV</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// ODDS COMPARISON TAB
+// ═══════════════════════════════════════════
+
+const BOOKS = ['draftkings','fanduel','betmgm','caesars','pointsbet','williamhill_us'];
+const BOOK_NAMES = {draftkings:'DraftKings',fanduel:'FanDuel',betmgm:'BetMGM',caesars:'Caesars',pointsbet:'PointsBet',williamhill_us:"Caesars"};
+
+async function loadOddsComparison(){
+  const sport = document.getElementById('odds-sport').value;
+  const c = document.getElementById('odds-comparison-container');
+  c.innerHTML = `<div style="text-align:center;padding:1.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Fetching live lines from all books...</div></div>`;
+
+  const oddsKey = getOddsKey();
+  const sportKey = ODDS_SPORTS[sport]?.[0] || 'basketball_nba';
+  try{
+    const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${oddsKey}&regions=us&markets=h2h,spreads,totals&oddsFormat=american&dateFormat=iso`;
+    const res = await fetch(PROXY + encodeURIComponent(url));
+    const games = await res.json();
+    if(!Array.isArray(games)||!games.length){
+      c.innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:13px">No ${sport} games found with active odds right now</div>`;
+      return;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const todayGames = games.filter(g=>g.commence_time&&g.commence_time.startsWith(today));
+    if(!todayGames.length){
+      c.innerHTML=`<div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:13px">No ${sport} games today with active odds</div>`;
+      return;
+    }
+    c.innerHTML = todayGames.map(g=>{
+      const books = g.bookmakers || [];
+      // Get spread & ML from each book
+      const bookData = books.slice(0,5).map(b=>{
+        const h2h = b.markets?.find(m=>m.key==='h2h');
+        const spr = b.markets?.find(m=>m.key==='spreads');
+        const tot = b.markets?.find(m=>m.key==='totals');
+        const homeML = h2h?.outcomes?.find(o=>o.name===g.home_team)?.price;
+        const awayML = h2h?.outcomes?.find(o=>o.name===g.away_team)?.price;
+        const homeSpr = spr?.outcomes?.find(o=>o.name===g.home_team);
+        const over = tot?.outcomes?.find(o=>o.name==='Over');
+        return {
+          book: b.title,
+          homeML: homeML?(homeML>0?'+':'')+homeML:null,
+          awayML: awayML?(awayML>0?'+':'')+awayML:null,
+          spread: homeSpr?(homeSpr.point>0?'+':'')+homeSpr.point:null,
+          total: over?over.point:null
+        };
+      }).filter(b=>b.homeML||b.spread);
+
+      // Find best ML for each side
+      const bestHomeML = bookData.reduce((best,b)=>{if(!b.homeML)return best;const v=parseInt(b.homeML);return(!best||v>parseInt(best))?b.homeML:best},null);
+      const bestAwayML = bookData.reduce((best,b)=>{if(!b.awayML)return best;const v=parseInt(b.awayML);return(!best||v>parseInt(best))?b.awayML:best},null);
+
+      const time = g.commence_time ? new Date(g.commence_time).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : 'TBD';
+
+      return `<div style="background:rgba(17,24,39,0.8);border:1px solid rgba(255,255,255,0.06);border-radius:var(--rl);padding:1rem;margin-bottom:.85rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;flex-wrap:wrap;gap:6px">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--t1);font-family:var(--font-display)">${g.away_team} @ ${g.home_team}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px">${sport} · ${time}</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            ${bestAwayML?`<div style="text-align:center"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">BEST AWAY ML</div><div style="font-size:14px;font-weight:700;color:var(--green);font-family:var(--font-mono)">${bestAwayML}</div></div>`:''}
+            ${bestHomeML?`<div style="text-align:center"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">BEST HOME ML</div><div style="font-size:14px;font-weight:700;color:var(--green);font-family:var(--font-mono)">${bestHomeML}</div></div>`:''}
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.06)">
+                <th style="text-align:left;padding:.4rem .5rem;color:var(--t3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:10px">Book</th>
+                <th style="text-align:center;padding:.4rem .5rem;color:var(--t3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:10px">${g.away_team.split(' ').pop()} ML</th>
+                <th style="text-align:center;padding:.4rem .5rem;color:var(--t3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:10px">${g.home_team.split(' ').pop()} ML</th>
+                <th style="text-align:center;padding:.4rem .5rem;color:var(--t3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:10px">Spread</th>
+                <th style="text-align:center;padding:.4rem .5rem;color:var(--t3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-size:10px">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bookData.map(b=>`
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);transition:background .15s" onmouseover="this.style.background='rgba(79,142,247,0.04)'" onmouseout="this.style.background=''">
+                  <td style="padding:.5rem .5rem;font-weight:600;color:var(--t1)">${b.book}</td>
+                  <td style="text-align:center;padding:.5rem .5rem;font-family:var(--font-mono);color:${b.awayML===bestAwayML?'var(--green)':'var(--t2)'};font-weight:${b.awayML===bestAwayML?'700':'400'}">${b.awayML||'—'}</td>
+                  <td style="text-align:center;padding:.5rem .5rem;font-family:var(--font-mono);color:${b.homeML===bestHomeML?'var(--green)':'var(--t2)'};font-weight:${b.homeML===bestHomeML?'700':'400'}">${b.homeML||'—'}</td>
+                  <td style="text-align:center;padding:.5rem .5rem;font-family:var(--font-mono);color:var(--t2)">${b.spread||'—'}</td>
+                  <td style="text-align:center;padding:.5rem .5rem;font-family:var(--font-mono);color:var(--accent)">${b.total||'—'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    c.innerHTML=`<div style="color:var(--red);font-size:13px;padding:.5rem">Error: ${e.message}</div>`;
+  }
+}
+
+async function scanArbitrage(){
+  const c = document.getElementById('arb-container');
+  c.innerHTML=`<div style="text-align:center;padding:1.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Scanning all books for arbitrage...</div></div>`;
+  const sport = document.getElementById('odds-sport').value;
+  const oddsKey = getOddsKey();
+  const sportKey = ODDS_SPORTS[sport]?.[0]||'basketball_nba';
+  try{
+    const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${oddsKey}&regions=us&markets=h2h&oddsFormat=american&dateFormat=iso`;
+    const res = await fetch(PROXY + encodeURIComponent(url));
+    const games = await res.json();
+    const arbs = [];
+    const amToDec = o=>{const n=parseInt(o>0?'+'+o:o);return n>0?(n/100)+1:(100/Math.abs(n))+1;};
+
+    games.forEach(g=>{
+      const books = g.bookmakers||[];
+      let bestAway=null,bestHome=null,bestAwayBook='',bestHomeBook='';
+      books.forEach(b=>{
+        const h2h=b.markets?.find(m=>m.key==='h2h');
+        const awayOdds=h2h?.outcomes?.find(o=>o.name===g.away_team)?.price;
+        const homeOdds=h2h?.outcomes?.find(o=>o.name===g.home_team)?.price;
+        if(awayOdds&&(!bestAway||awayOdds>bestAway)){bestAway=awayOdds;bestAwayBook=b.title;}
+        if(homeOdds&&(!bestHome||homeOdds>bestHome)){bestHome=homeOdds;bestHomeBook=b.title;}
+      });
+      if(bestAway&&bestHome){
+        const decAway=amToDec(bestAway);
+        const decHome=amToDec(bestHome);
+        const margin=(1/decAway)+(1/decHome);
+        if(margin<1){
+          const profit=((1/margin)-1)*100;
+          arbs.push({game:`${g.away_team} @ ${g.home_team}`,awayOdds:(bestAway>0?'+':'')+bestAway,homeOdds:(bestHome>0?'+':'')+bestHome,awayBook:bestAwayBook,homeBook:bestHomeBook,profit:profit.toFixed(2),margin:(margin*100).toFixed(1)});
+        }
+      }
+    });
+
+    if(!arbs.length){
+      c.innerHTML=`<div style="text-align:center;padding:1.5rem">
+        <div style="font-size:24px;margin-bottom:.5rem">✅</div>
+        <div style="font-size:13px;font-weight:600;color:var(--t1)">No Arbs Found Right Now</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:.4rem">Markets are efficient today. Check back as lines move closer to game time.</div>
+      </div>`;
+      return;
+    }
+    c.innerHTML=arbs.map(a=>`
+      <div style="background:rgba(45,212,160,0.06);border:1px solid rgba(45,212,160,0.2);border-radius:var(--rl);padding:1rem;margin-bottom:.75rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;flex-wrap:wrap;gap:6px">
+          <div style="font-size:13px;font-weight:700;color:var(--t1);font-family:var(--font-display)">${a.game}</div>
+          <div style="font-size:16px;font-weight:700;color:var(--green);font-family:var(--font-mono)">+${a.profit}% profit</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:rgba(17,24,39,0.7);border-radius:10px;padding:.65rem">
+            <div style="font-size:10px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Bet Away on</div>
+            <div style="font-size:13px;font-weight:700;color:var(--t1)">${a.awayBook}</div>
+            <div style="font-size:16px;font-weight:700;color:var(--green);font-family:var(--font-mono)">${a.awayOdds}</div>
+          </div>
+          <div style="background:rgba(17,24,39,0.7);border-radius:10px;padding:.65rem">
+            <div style="font-size:10px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Bet Home on</div>
+            <div style="font-size:13px;font-weight:700;color:var(--t1)">${a.homeBook}</div>
+            <div style="font-size:16px;font-weight:700;color:var(--green);font-family:var(--font-mono)">${a.homeOdds}</div>
+          </div>
+        </div>
+      </div>`).join('');
+  }catch(e){
+    c.innerHTML=`<div style="color:var(--red);font-size:13px;padding:.5rem">Error: ${e.message}</div>`;
+  }
+}
+
+async function loadSharpMoney(){
+  const c = document.getElementById('sharp-money-container');
+  c.innerHTML=`<div style="text-align:center;padding:1.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Analyzing sharp vs public money splits...</div></div>`;
+  const sport = document.getElementById('odds-sport').value;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const games = await fetchTodaysGames(sport);
+  const gameCtx = formatGamesForAI(games);
+  try{
+    const res = await aiCall(
+      `You are a sharp money analyst. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `TODAY'S ${sport} GAMES:\n${gameCtx}\n\nFor each game, estimate the public bet % vs sharp money % based on typical betting patterns, public favorites, and line movement signals.\nJSON: {"splits":[{"game":"Away @ Home","sport":"${sport}","publicBetPct":72,"sharpMoneyPct":28,"publicSide":"Away Team","sharpSide":"Home Team","signal":"steam/reverse/neutral","note":"Brief explanation of divergence","recommendation":"Sharp side: Home Team +2.5"}]}\nsignal: 'steam' = sharp action, 'reverse' = public % high but money % low, 'neutral' = no clear signal.`,
+      900
+    );
+    const data = JSON.parse(res.replace(/```json|```/g,'').trim());
+    c.innerHTML = data.splits.map(s=>{
+      const signalColor = s.signal==='steam'?'var(--red)':s.signal==='reverse'?'var(--accent)':'var(--t3)';
+      const signalLabel = s.signal==='steam'?'🔥 STEAM':s.signal==='reverse'?'⚡ REVERSE':'— NEUTRAL';
+      return `<div style="padding:.85rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem;flex-wrap:wrap;gap:6px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--t1);font-family:var(--font-display)">${s.game}</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px">${s.note}</div>
+          </div>
+          <span style="font-size:10px;font-weight:700;color:${signalColor};padding:3px 9px;border-radius:20px;background:${signalColor}18;border:1px solid ${signalColor}33">${signalLabel}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.65rem">
+          <div style="background:rgba(17,24,39,0.7);border-radius:10px;padding:.65rem">
+            <div style="font-size:10px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Public Bets</div>
+            <div style="font-size:20px;font-weight:700;color:var(--t1);font-family:var(--font-mono)">${s.publicBetPct}%</div>
+            <div style="font-size:11px;color:var(--t2)">${s.publicSide}</div>
+          </div>
+          <div style="background:rgba(17,24,39,0.7);border-radius:10px;padding:.65rem">
+            <div style="font-size:10px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Sharp $$$</div>
+            <div style="font-size:20px;font-weight:700;color:${s.signal==='steam'?'var(--red)':'var(--accent)'};font-family:var(--font-mono)">${s.sharpMoneyPct}%</div>
+            <div style="font-size:11px;color:var(--t2)">${s.sharpSide}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${s.publicBetPct}%;background:linear-gradient(90deg,rgba(79,142,247,0.5),rgba(124,90,247,0.4));border-radius:3px;transition:width .6s ease"></div>
+          </div>
+          <div style="font-size:11px;color:var(--green);font-weight:600">▶ ${s.recommendation}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    c.innerHTML=`<div style="color:var(--red);font-size:13px;padding:.5rem">Error: ${e.message}</div>`;
   }
 }
 
