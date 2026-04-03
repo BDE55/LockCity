@@ -293,6 +293,13 @@ select.inp{padding:.46rem .6rem}
 .notice{font-size:12px;color:var(--t2);line-height:1.7;padding:.8rem 1rem;background:rgba(79,142,247,0.05);border-radius:12px;border:1px solid rgba(79,142,247,0.15);border-left:3px solid rgba(79,142,247,0.5)}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .disclaimer{font-size:11px;color:var(--t3);text-align:center;padding:.85rem 1.25rem;border-top:1px solid rgba(255,255,255,0.04);line-height:1.6}
+
+/* ── WIDGET MODE ── */
+#widget-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(5,8,16,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:1rem;overflow-y:auto}
+#widget-overlay.active{display:flex;flex-direction:column;gap:10px}
+.widget-card{background:linear-gradient(145deg,rgba(23,32,53,0.98),rgba(17,24,39,0.95));border:1px solid rgba(255,255,255,0.08);border-top-color:rgba(255,255,255,0.14);border-radius:20px;padding:1rem 1.1rem;box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+.widget-close{position:fixed;top:1rem;right:1rem;z-index:1000;width:36px;height:36px;border-radius:50%;background:rgba(255,107,122,0.15);border:1px solid rgba(255,107,122,0.3);color:var(--red);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.widget-close:hover{background:rgba(255,107,122,0.25);transform:scale(1.1)}
 .chart-wrap{position:relative;height:170px;margin-top:.65rem}
 .empty-state{text-align:center;padding:2rem 1rem;color:var(--t3);font-size:13px}
 .empty-state .big{font-family:var(--font-display);font-size:30px;color:var(--t4);letter-spacing:.5px;font-weight:700;margin-bottom:.5rem}
@@ -547,7 +554,10 @@ select.inp{padding:.46rem .6rem}
       <div id="hdr-avatar" style="width:32px;height:32px;border-radius:50%;border:.5px solid;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;flex-shrink:0">—</div>
       <div>
         <div id="hdr-user-name" style="font-size:12px;font-weight:500;line-height:1.2">—</div>
-        <button onclick="logout()" style="font-size:10px;color:var(--t3);background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;transition:color .12s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--t3)'">Sign out</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onclick="toggleWidget()" title="Widget Mode" style="font-size:14px;background:none;border:none;cursor:pointer;padding:0;line-height:1;transition:transform .2s;opacity:.6" onmouseover="this.style.opacity='1';this.style.transform='scale(1.15)'" onmouseout="this.style.opacity='.6';this.style.transform='scale(1)'">📱</button>
+          <button onclick="logout()" style="font-size:10px;color:var(--t3);background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;transition:color .12s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--t3)'">Sign out</button>
+        </div>
       </div>
     </div>
   </div>
@@ -571,6 +581,7 @@ select.inp{padding:.46rem .6rem}
   <button class="tab" onclick="showTab('props',this)">🎲 Props</button>
   <button class="tab" onclick="showTab('intel',this)">🧠 Intel</button>
   <button class="tab" onclick="showTab('odds',this)">💰 Odds</button>
+  <button class="tab" onclick="showTab('tools',this)">🔧 Tools</button>
   <button class="tab" onclick="showTab('settings',this)">⚙️ Settings</button>
 </div>
 
@@ -1007,6 +1018,138 @@ select.inp{padding:.46rem .6rem}
   </div>
 </div>
 
+<!-- ══════════════════ TOOLS ══════════════════ -->
+<div class="panel" id="tab-tools">
+
+  <!-- ── HEDGE CALCULATOR ── -->
+  <div class="card-accent" style="margin-bottom:1rem">
+    <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px">🛡 Hedge Calculator</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:1.1rem">Lock in guaranteed profit on a live parlay with one leg remaining</div>
+
+    <div style="display:grid;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Original Wager ($)</div>
+          <input id="h-wager" class="inp inp-mono" type="number" placeholder="100" oninput="calcHedge()" style="width:100%"/>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Parlay Payout ($)</div>
+          <input id="h-payout" class="inp inp-mono" type="number" placeholder="850" oninput="calcHedge()" style="width:100%"/>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Last Leg Odds (American)</div>
+        <input id="h-leg-odds" class="inp inp-mono" type="text" placeholder="-110 or +150" oninput="calcHedge()" style="width:100%"/>
+      </div>
+    </div>
+
+    <div id="hedge-result" style="margin-top:1rem;display:none">
+      <div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:1rem"></div>
+      <div class="wager-grid" style="margin:0 0 .85rem 0">
+        <div class="wbox"><div class="wbox-lbl">Hedge Bet</div><div class="wbox-val green" id="h-bet">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">If Parlay Wins</div><div class="wbox-val gold" id="h-win-parlay">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">If Hedge Wins</div><div class="wbox-val blue" id="h-win-hedge">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">Guaranteed</div><div class="wbox-val green" id="h-guaranteed">—</div></div>
+      </div>
+      <div id="hedge-notice" class="notice"></div>
+    </div>
+  </div>
+
+  <!-- ── PARLAY CALCULATOR ── -->
+  <div class="card0" style="margin-bottom:1rem">
+    <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px">🧮 Parlay Calculator</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:1rem">Add legs to see combined odds and payout</div>
+    <div id="calc-legs" style="display:grid;gap:8px;margin-bottom:.85rem"></div>
+    <button class="btn gold" style="width:100%;font-size:12px" onclick="addCalcLeg()">+ Add Leg</button>
+    <div id="calc-result" style="margin-top:1rem;display:none">
+      <div style="height:1px;background:rgba(255,255,255,0.06);margin:.75rem 0"></div>
+      <div class="wager-grid" style="margin:0">
+        <div class="wbox"><div class="wbox-lbl">Combined Odds</div><div class="wbox-val gold" id="calc-odds">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">Implied Prob</div><div class="wbox-val" id="calc-prob">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">$100 wins</div><div class="wbox-val green" id="calc-win">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">Total return</div><div class="wbox-val blue" id="calc-total">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SGP BUILDER ── -->
+  <div class="card0" style="margin-bottom:1rem">
+    <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px">⚡ Same Game Parlay Builder</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:1rem">AI builds correlated SGP legs from a single game</div>
+    <div style="display:grid;gap:8px;margin-bottom:.85rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Sport</div>
+          <select id="sgp-sport" class="inp" style="width:100%" onchange="loadSGPGames()">
+            <option value="NBA">NBA</option>
+            <option value="MLB">MLB</option>
+            <option value="NFL">NFL</option>
+            <option value="NHL">NHL</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Game</div>
+          <select id="sgp-game" class="inp" style="width:100%">
+            <option value="">Loading games...</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Legs</div>
+          <select id="sgp-legs" class="inp" style="width:100%">
+            <option value="3">3 legs</option>
+            <option value="4">4 legs</option>
+            <option value="5">5 legs</option>
+            <option value="6">6 legs</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Style</div>
+          <select id="sgp-style" class="inp" style="width:100%">
+            <option value="safe">Safe (high hit rate)</option>
+            <option value="balanced">Balanced</option>
+            <option value="spicy">Spicy (big payout)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn solid" onclick="buildSGP()" style="width:100%;padding:.7rem;font-size:14px">⚡ Build SGP</button>
+    </div>
+    <div id="sgp-container">
+      <div style="text-align:center;padding:1.5rem;color:var(--t3);font-size:13px">Select a game and tap Build SGP</div>
+    </div>
+  </div>
+
+  <!-- ── EV CALCULATOR ── -->
+  <div class="card0">
+    <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px">📐 Expected Value Calculator</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:1rem">Is this bet worth taking? Enter the odds and your estimated win probability</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:.85rem">
+      <div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Odds</div>
+        <input id="ev-odds" class="inp inp-mono" type="text" placeholder="-110" oninput="calcEV()" style="width:100%"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Your Win %</div>
+        <input id="ev-prob" class="inp inp-mono" type="number" placeholder="55" min="1" max="99" oninput="calcEV()" style="width:100%"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600">Wager ($)</div>
+        <input id="ev-wager" class="inp inp-mono" type="number" placeholder="100" oninput="calcEV()" style="width:100%"/>
+      </div>
+    </div>
+    <div id="ev-result" style="display:none">
+      <div class="wager-grid" style="margin:0 0 .75rem 0">
+        <div class="wbox"><div class="wbox-lbl">Expected Value</div><div class="wbox-val" id="ev-val">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">Book's Vig</div><div class="wbox-val" id="ev-vig">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">Break-even %</div><div class="wbox-val" id="ev-break">—</div></div>
+        <div class="wbox"><div class="wbox-lbl">Edge</div><div class="wbox-val" id="ev-edge">—</div></div>
+      </div>
+      <div id="ev-verdict" class="notice"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════ SETTINGS ══════════════════ -->
 <div class="panel" id="tab-settings">
   <div class="sec-title">Settings & API Keys</div>
@@ -1100,6 +1243,46 @@ select.inp{padding:.46rem .6rem}
 
 <div class="disclaimer">Lock City LLC is for entertainment and informational purposes only. Past performance does not guarantee future results. Gamble responsibly. 21+ only.</div>
 </div><!-- end #app -->
+
+<!-- ══════════════════ WIDGET MODE ══════════════════ -->
+<div id="widget-overlay">
+  <button class="widget-close" onclick="toggleWidget()">✕</button>
+
+  <!-- P&L Summary -->
+  <div class="widget-card">
+    <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:.6rem">📊 Today's Performance</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="widget-stats"></div>
+  </div>
+
+  <!-- Pending Bets -->
+  <div class="widget-card" id="widget-pending-card">
+    <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:.6rem">⏳ Pending Bets</div>
+    <div id="widget-pending"></div>
+  </div>
+
+  <!-- Live Games -->
+  <div class="widget-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+      <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:700">🟢 Live Now</div>
+      <button onclick="refreshWidget()" style="font-size:10px;color:var(--accent);background:none;border:none;cursor:pointer;font-family:var(--font-body)">↻ Refresh</button>
+    </div>
+    <div id="widget-live"></div>
+  </div>
+
+  <!-- Quick Bet Log -->
+  <div class="widget-card">
+    <div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:.75rem">➕ Quick Log Bet</div>
+    <div style="display:grid;gap:8px">
+      <input id="w-pick" class="inp" type="text" placeholder="Pick description..." style="width:100%"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <input id="w-odds" class="inp inp-mono" type="text" placeholder="Odds"/>
+        <input id="w-wager" class="inp inp-mono" type="number" placeholder="Wager $"/>
+        <select id="w-sport" class="inp"><option>NBA</option><option>MLB</option><option>NFL</option><option>NHL</option><option>Other</option></select>
+      </div>
+      <button class="btn solid" onclick="widgetLogBet()" style="width:100%;padding:.6rem;font-size:13px">Log Bet</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════
@@ -1312,6 +1495,7 @@ function showTab(name,btn){
   if(name==='lines'){ loadLiveGames(); refreshLines(); refreshFades(); }
   if(name==='intel'){ renderAdvancedAnalytics(); }
   if(name==='odds'){ loadOddsComparison(); }
+  if(name==='tools'){ loadSGPGames(); if(!calcLegCount){ addCalcLeg(); addCalcLeg(); } }
   if(name==='settings' && isAdmin()){ renderUserManagement(); }
 }
 
@@ -2459,6 +2643,324 @@ async function loadSharpMoney(){
   }catch(e){
     c.innerHTML=`<div style="color:var(--red);font-size:13px;padding:.5rem">Error: ${e.message}</div>`;
   }
+}
+
+
+// ═══════════════════════════════════════════
+// HEDGE CALCULATOR
+// ═══════════════════════════════════════════
+function amToDec(odds){
+  const n = parseInt((odds+'').replace('+',''));
+  if(isNaN(n)) return 1.909;
+  return n > 0 ? (n/100)+1 : (100/Math.abs(n))+1;
+}
+function decToAm(dec){
+  if(dec >= 2) return '+'+(Math.round((dec-1)*100));
+  return '-'+Math.round(100/(dec-1));
+}
+
+function calcHedge(){
+  const wager = +document.getElementById('h-wager').value;
+  const payout = +document.getElementById('h-payout').value;
+  const oddsRaw = document.getElementById('h-leg-odds').value.trim();
+  const res = document.getElementById('hedge-result');
+  if(!wager || !payout || !oddsRaw){ res.style.display='none'; return; }
+
+  const legDec = amToDec(oddsRaw);
+  // Hedge formula: hedge = payout / legDec
+  const hedgeBet = payout / legDec;
+  const hedgePayout = hedgeBet * legDec; // = payout (what you get if last leg hits without hedge)
+  const hedgeWin = hedgeBet * (legDec - 1); // profit if hedge wins
+
+  // If parlay wins: payout - original wager - hedge bet
+  const netParlay = payout - wager - hedgeBet;
+  // If hedge wins: hedgeWin - wager
+  const netHedge = hedgeWin - wager;
+  // Guaranteed minimum
+  const guaranteed = Math.min(netParlay, netHedge);
+
+  res.style.display = 'block';
+  document.getElementById('h-bet').textContent = '$'+hedgeBet.toFixed(2);
+  document.getElementById('h-win-parlay').textContent = (netParlay>=0?'+$':'-$')+Math.abs(netParlay).toFixed(2);
+  document.getElementById('h-win-hedge').textContent = (netHedge>=0?'+$':'-$')+Math.abs(netHedge).toFixed(2);
+  document.getElementById('h-guaranteed').textContent = (guaranteed>=0?'+$':'-$')+Math.abs(guaranteed).toFixed(2);
+
+  const notice = document.getElementById('hedge-notice');
+  if(guaranteed > 0){
+    notice.style.borderLeftColor='rgba(45,212,160,0.5)';
+    notice.style.background='rgba(45,212,160,0.05)';
+    notice.innerHTML = `✅ <strong>Bet $${hedgeBet.toFixed(2)} on the other side.</strong> You lock in +$${guaranteed.toFixed(2)} guaranteed profit regardless of outcome. If the parlay wins you net +$${netParlay.toFixed(2)}, if it loses you net +$${netHedge.toFixed(2)}.`;
+  } else {
+    notice.style.borderLeftColor='rgba(79,142,247,0.5)';
+    notice.style.background='rgba(79,142,247,0.05)';
+    notice.innerHTML = `ℹ️ A full hedge would cost $${hedgeBet.toFixed(2)} but doesn't guarantee profit from your original stake. Consider a <strong>partial hedge</strong> — bet less to reduce downside while keeping upside.`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// PARLAY CALCULATOR
+// ═══════════════════════════════════════════
+let calcLegCount = 0;
+
+function addCalcLeg(){
+  calcLegCount++;
+  const id = 'calc-leg-'+calcLegCount;
+  const div = document.createElement('div');
+  div.id = id;
+  div.style.cssText = 'display:flex;gap:8px;align-items:center';
+  div.innerHTML = `
+    <span style="font-size:11px;color:var(--t3);font-family:var(--font-mono);min-width:20px">L${calcLegCount}</span>
+    <input class="inp inp-mono" type="text" placeholder="Odds (e.g. -110)" oninput="updateCalc()" style="flex:1"/>
+    <button onclick="this.parentElement.remove();updateCalc()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;line-height:1;padding:0;transition:color .15s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--t3)'">✕</button>`;
+  document.getElementById('calc-legs').appendChild(div);
+  div.querySelector('input').focus();
+  updateCalc();
+}
+
+function updateCalc(){
+  const inputs = document.querySelectorAll('#calc-legs input');
+  const res = document.getElementById('calc-result');
+  if(!inputs.length){ res.style.display='none'; return; }
+
+  let decOdds = 1;
+  let allFilled = true;
+  inputs.forEach(inp => {
+    const v = inp.value.trim();
+    if(!v){ allFilled=false; return; }
+    decOdds *= amToDec(v);
+  });
+  if(!allFilled || inputs.length < 2){ res.style.display='none'; return; }
+
+  const impliedProb = (1/decOdds)*100;
+  const profit = (decOdds-1)*100;
+  const total = decOdds*100;
+  const amOdds = decToAm(decOdds);
+
+  res.style.display = 'block';
+  document.getElementById('calc-odds').textContent = amOdds;
+  document.getElementById('calc-prob').textContent = impliedProb.toFixed(1)+'%';
+  document.getElementById('calc-win').textContent = '+$'+profit.toFixed(2);
+  document.getElementById('calc-total').textContent = '$'+total.toFixed(2);
+}
+
+// ═══════════════════════════════════════════
+// SAME GAME PARLAY BUILDER
+// ═══════════════════════════════════════════
+async function loadSGPGames(){
+  const sport = document.getElementById('sgp-sport').value;
+  const sel = document.getElementById('sgp-game');
+  sel.innerHTML = '<option>Loading...</option>';
+  const games = await fetchTodaysGames(sport);
+  if(!games||!games.length){
+    sel.innerHTML = '<option value="">No games today</option>';
+    return;
+  }
+  sel.innerHTML = games.map(g=>`<option value="${g.away} @ ${g.home}">${g.away} @ ${g.home} (${g.time})</option>`).join('');
+}
+
+async function buildSGP(){
+  const sport = document.getElementById('sgp-sport').value;
+  const game = document.getElementById('sgp-game').value;
+  const legs = document.getElementById('sgp-legs').value;
+  const style = document.getElementById('sgp-style').value;
+  const c = document.getElementById('sgp-container');
+
+  if(!game||game==='No games today'){
+    c.innerHTML=`<div style="text-align:center;padding:1rem;color:var(--t3);font-size:13px">No games available — check another sport or come back later</div>`;
+    return;
+  }
+
+  c.innerHTML=`<div style="text-align:center;padding:1.5rem"><div class="dot-pulse"><span></span><span></span><span></span></div><div style="margin-top:.75rem;font-size:13px;color:var(--t2)">Building ${legs}-leg SGP for ${game}...</div></div>`;
+
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const styleGuide = style==='safe'?'Focus on -200 or better odds per leg, high probability plays like team totals, first half spreads':style==='spicy'?'Include player props with +120 or better odds, anytime scorer props, first team to score':' Mix of team props and player props, balanced odds';
+
+  try{
+    const res = await aiCall(
+      `You are an expert same game parlay builder. Today is ${today}. Return ONLY JSON, no markdown.`,
+      `Build a ${legs}-leg same game parlay for: ${game} (${sport})\nStyle: ${style} — ${styleGuide}\n\nAll legs must be from the SAME game. Use real player names and realistic lines.\nReturn JSON:\n{"game":"${game}","sport":"${sport}","style":"${style}","estimatedOdds":"+350","legs":[{"num":1,"type":"player_prop/team_prop/game_prop","pick":"Exact pick description","line":"Over/Under X.5 or ATS","odds":"-115","confidence":0.72,"reasoning":"Brief why this correlates or makes sense"}],"correlation_note":"Why these legs work well together","sgp_note":"Key risk to be aware of"}\nMake legs that have natural positive correlation (e.g. if team scores a lot, their player has more scoring chances).`,
+      1200
+    );
+    const data = JSON.parse(res.replace(/```json|```/g,'').trim());
+    const legs_html = data.legs.map(l => {
+      const pct = Math.round(l.confidence*100);
+      const cls = l.confidence>=.70?'hi':l.confidence>=.60?'md':'lo';
+      const typeColor = l.type==='player_prop'?'var(--purple)':l.type==='team_prop'?'var(--accent)':'var(--green)';
+      return `<div class="leg">
+        <div class="leg-num">L${l.num}</div>
+        <div class="leg-body">
+          <div style="font-size:10px;font-weight:700;color:${typeColor};text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">${l.type.replace(/_/g,' ')}</div>
+          <div class="leg-pick">${l.pick}</div>
+          <div class="leg-detail">${l.reasoning}</div>
+        </div>
+        <div class="leg-right">
+          <div class="leg-odds">${l.odds}</div>
+          <div class="conf-row"><div class="conf-bar"><div class="conf-fill ${cls}" style="width:${pct}%"></div></div><span class="conf-txt">${pct}%</span></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    c.innerHTML = `
+      <div style="margin-bottom:.85rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+          <div style="font-size:13px;font-weight:700;color:var(--t1);font-family:var(--font-display)">${data.game}</div>
+          <div class="odds-pill pos">${data.estimatedOdds}</div>
+        </div>
+        ${legs_html}
+      </div>
+      <div class="notice" style="margin-bottom:.75rem">🔗 <strong>Correlation:</strong> ${data.correlation_note}</div>
+      <div class="notice" style="border-left-color:rgba(255,107,122,0.5);background:rgba(255,107,122,0.04)">⚠️ <strong>Risk:</strong> ${data.sgp_note}</div>
+      <div class="btn-row">
+        <button class="btn solid" onclick="addSGPToSlip(${JSON.stringify(data).replace(/'/g,'').replace(/"/g,'&quot;')})">+ Add to Slip</button>
+      </div>`;
+  }catch(e){
+    c.innerHTML=`<div style="color:var(--red);font-size:13px;padding:.5rem">Error: ${e.message}</div>`;
+  }
+}
+
+function addSGPToSlip(data){
+  const pick = `SGP: ${data.game} — ${data.legs.map(l=>l.pick).join(' + ')}`;
+  S.slip.push({sport:data.sport,pick,odds:data.estimatedOdds,detail:'Same Game Parlay'});
+  saveSlip(); renderSlip();
+  alert('SGP added to slip!');
+}
+
+// ═══════════════════════════════════════════
+// EV CALCULATOR
+// ═══════════════════════════════════════════
+function calcEV(){
+  const oddsRaw = document.getElementById('ev-odds').value.trim();
+  const winPct = +document.getElementById('ev-prob').value;
+  const wager = +document.getElementById('ev-wager').value || 100;
+  const res = document.getElementById('ev-result');
+  if(!oddsRaw||!winPct){ res.style.display='none'; return; }
+
+  const dec = amToDec(oddsRaw);
+  const p = winPct/100;
+  const profit = wager*(dec-1);
+  const ev = (p*profit) - ((1-p)*wager);
+  const breakEven = (1/dec)*100;
+  const edge = winPct - breakEven;
+  // Book's implied prob (with vig)
+  const bookProb = breakEven;
+  const vig = (bookProb - 50) / 50 * 100; // simplified
+
+  res.style.display = 'block';
+  const evEl = document.getElementById('ev-val');
+  evEl.textContent = (ev>=0?'+$':'-$')+Math.abs(ev).toFixed(2);
+  evEl.className = 'wbox-val '+(ev>=0?'green':'red');
+
+  document.getElementById('ev-vig').textContent = Math.abs(vig).toFixed(1)+'%';
+  document.getElementById('ev-break').textContent = breakEven.toFixed(1)+'%';
+  const edgeEl = document.getElementById('ev-edge');
+  edgeEl.textContent = (edge>=0?'+':'')+edge.toFixed(1)+'%';
+  edgeEl.className = 'wbox-val '+(edge>=0?'green':'red');
+
+  const verdict = document.getElementById('ev-verdict');
+  if(ev > 0 && edge >= 3){
+    verdict.style.borderLeftColor='rgba(45,212,160,0.5)';
+    verdict.style.background='rgba(45,212,160,0.05)';
+    verdict.innerHTML = `✅ <strong>Sharp Play.</strong> At ${winPct}% win probability you have a +${edge.toFixed(1)}% edge over the book. Expected value of +$${ev.toFixed(2)} per $${wager} bet. This is a bet worth making.`;
+  } else if(ev > 0){
+    verdict.style.borderLeftColor='rgba(79,142,247,0.5)';
+    verdict.style.background='rgba(79,142,247,0.05)';
+    verdict.innerHTML = `ℹ️ <strong>Marginal value.</strong> Slightly +EV at +$${ev.toFixed(2)} but your edge is small (${edge.toFixed(1)}%). Only bet if you're confident in your ${winPct}% estimate.`;
+  } else {
+    verdict.style.borderLeftColor='rgba(255,107,122,0.5)';
+    verdict.style.background='rgba(255,107,122,0.05)';
+    verdict.innerHTML = `❌ <strong>Negative EV.</strong> At ${winPct}% win probability this bet loses $${Math.abs(ev).toFixed(2)} on average per $${wager} wagered. The book needs you to win ${breakEven.toFixed(1)}% — you'd need more edge to make this worth it.`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// WIDGET MODE
+// ═══════════════════════════════════════════
+let widgetOpen = false;
+
+function toggleWidget(){
+  widgetOpen = !widgetOpen;
+  const el = document.getElementById('widget-overlay');
+  if(widgetOpen){
+    el.classList.add('active');
+    refreshWidget();
+  } else {
+    el.classList.remove('active');
+  }
+}
+
+async function refreshWidget(){
+  // Stats
+  const settled = S.bets.filter(b=>b.result!=='pending');
+  const todayStr = new Date().toLocaleDateString();
+  const todayBets = settled.filter(b=>b.date===todayStr);
+  const todayPnl = todayBets.reduce((a,b)=>a+b.pnl,0);
+  const totalPnl = settled.reduce((a,b)=>a+b.pnl,0);
+  const wins = settled.filter(b=>b.result==='win').length;
+  const pending = S.bets.filter(b=>b.result==='pending');
+
+  document.getElementById('widget-stats').innerHTML = `
+    <div style="text-align:center"><div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${todayPnl>=0?'var(--green)':'var(--red)'}">${todayPnl>=0?'+$':'-$'}${Math.abs(todayPnl).toFixed(0)}</div><div style="font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px">Today</div></div>
+    <div style="text-align:center"><div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${totalPnl>=0?'var(--green)':'var(--red)'}">${totalPnl>=0?'+$':'-$'}${Math.abs(totalPnl).toFixed(0)}</div><div style="font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px">Total P&L</div></div>
+    <div style="text-align:center"><div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--t1)">${wins}-${settled.length-wins}</div><div style="font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px">Record</div></div>
+    <div style="text-align:center"><div style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--accent)">${pending.length}</div><div style="font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px">Pending</div></div>`;
+
+  // Pending bets
+  const pendingEl = document.getElementById('widget-pending');
+  const pendingCard = document.getElementById('widget-pending-card');
+  if(pending.length){
+    pendingCard.style.display='block';
+    pendingEl.innerHTML = pending.slice(0,4).map(b=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(79,142,247,0.12);color:var(--accent);font-weight:700;font-family:var(--font-mono);white-space:nowrap">${b.sport}</span>
+        <div style="flex:1;font-size:12px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.pick}</div>
+        <div style="font-size:11px;font-family:var(--font-mono);color:var(--t2);white-space:nowrap">${b.odds}</div>
+        <div style="font-size:11px;font-family:var(--font-mono);color:var(--t3)">\$${b.wager}</div>
+      </div>`).join('');
+  } else {
+    pendingCard.style.display='none';
+  }
+
+  // Live games
+  const liveEl = document.getElementById('widget-live');
+  liveEl.innerHTML = `<div style="color:var(--t3);font-size:12px">Loading...</div>`;
+  const games = await fetchTodaysGames('All');
+  const live = (games||[]).filter(g=>g.isLive);
+  if(live.length){
+    liveEl.innerHTML = live.map(g=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:dp 1.2s ease-in-out infinite"></span>
+        <div style="flex:1;font-size:12px;font-weight:600;color:var(--t1)">${g.away} @ ${g.home}</div>
+        ${g.homeScore!==null?`<div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:var(--t1)">${g.awayScore}–${g.homeScore}</div>`:''}
+        <span style="font-size:10px;color:var(--accent);font-family:var(--font-mono)">${g.sport}</span>
+      </div>`).join('');
+  } else {
+    const upcoming = (games||[]).filter(g=>!g.isCompleted).slice(0,3);
+    if(upcoming.length){
+      liveEl.innerHTML = upcoming.map(g=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:.45rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+          <span style="font-size:10px;font-family:var(--font-mono);color:var(--t3);white-space:nowrap">${g.time}</span>
+          <div style="flex:1;font-size:12px;color:var(--t1)">${g.away} @ ${g.home}</div>
+          <span style="font-size:10px;color:var(--t3);font-family:var(--font-mono)">${g.sport}</span>
+        </div>`).join('');
+    } else {
+      liveEl.innerHTML = `<div style="color:var(--t3);font-size:12px;padding:.5rem 0">No live games right now</div>`;
+    }
+  }
+}
+
+function widgetLogBet(){
+  const pick = document.getElementById('w-pick').value.trim();
+  const odds = document.getElementById('w-odds').value.trim();
+  const wager = +document.getElementById('w-wager').value;
+  const sport = document.getElementById('w-sport').value;
+  if(!pick||!wager){ alert('Pick and wager required.'); return; }
+  const dec = amToDec(odds||'-110');
+  S.bets.unshift({id:Date.now(),date:new Date().toLocaleDateString(),sport,pick,odds:odds||'—',wager,result:'pending',pnl:0});
+  saveBets(); renderHistory(); updateHdrStats();
+  document.getElementById('w-pick').value='';
+  document.getElementById('w-odds').value='';
+  document.getElementById('w-wager').value='';
+  refreshWidget();
 }
 
 // ═══════════════════════════════════════════
