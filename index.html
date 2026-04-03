@@ -387,7 +387,7 @@ select.inp{padding:.46rem .6rem}
     var err  = document.getElementById('login-err');
     if(getPass(user) === pass){
       err.textContent = '';
-      try{ localStorage.setItem('lc_user', user); localStorage.setItem('lc_login_time', Date.now()); }catch(e){}
+      try{ localStorage.removeItem('lc_user'); }catch(e){}
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       if(typeof CURRENT_USER !== 'undefined') CURRENT_USER = user;
@@ -431,8 +431,8 @@ select.inp{padding:.46rem .6rem}
   </div>
 </div>
 
-<!-- API BANNER -->
-<div id="api-banner">
+<!-- API BANNER - hidden, key managed in Settings only -->
+<div id="api-banner" style="display:none">
   <label>Anthropic Key:</label>
   <input id="ant-key" class="api-input" type="password" placeholder="sk-ant-..." autocomplete="off"/>
   <button class="api-save" onclick="saveKeys()">Save</button>
@@ -2422,7 +2422,7 @@ function attemptLogin(){
   }
   err.textContent = '';
   CURRENT_USER = user;
-  try{ localStorage.setItem('lc_user', user); }catch(e){}
+  try{ localStorage.removeItem('lc_user'); }catch(e){}
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   bootApp();
@@ -2446,7 +2446,7 @@ function bootApp(){
   document.getElementById('hdr-avatar').style.background=acc.color+'22';
   document.getElementById('hdr-avatar').style.color=acc.color;
   document.getElementById('hdr-avatar').style.borderColor=acc.color+'55';
-  document.getElementById('api-banner').style.display=acc.role==='admin'?'flex':'none';
+  // API banner stays hidden - key managed in Settings only
   renderApiSettings();
   resetInactivityTimer();
   init();
@@ -2785,18 +2785,9 @@ window.addEventListener('load', function(){
   // Pre-seed Odds API key
   try{ localStorage.setItem('odds_api_key','921a3e9fd770e469c21ca0c02d958a54'); }catch(e){}
   checkSlipLayout();
-  // Restore session
-  var saved = '';
-  try{ saved = localStorage.getItem('lc_user')||''; }catch(e){}
-  if(saved && ACCOUNTS[saved]){
-    CURRENT_USER = saved;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    bootApp();
-  } else {
-    document.getElementById('login-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-  }
+  // Always require login on every page load
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
 });
 </script>
 </body>
